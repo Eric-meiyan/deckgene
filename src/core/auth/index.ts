@@ -41,6 +41,23 @@ function getDatabaseProvider(provider: string): 'sqlite' | 'pg' | 'mysql' {
   }
 }
 
+// workerd forbids reusing TCP sockets across requests ("Cannot perform I/O on
+// behalf of a different request"). drizzleAdapter(db()) bakes the postgres/
+// mysql client in at construction, so a cached auth instance makes an OAuth
+// callback query `verification` with the initiating request's client —
+// better-auth swallows the error as please_restart_the_process. Rebuild per
+// request on Workers; db() already hands out a fresh client there.
+const isCloudflareWorker =
+  (typeof navigator !== 'undefined' &&
+    navigator.userAgent === 'Cloudflare-Workers') ||
+  (typeof globalThis !== 'undefined' && 'Cloudflare' in globalThis);
+
+const TCP_PROVIDERS = ['postgresql', 'postgres', 'mysql'];
+
+const canCacheAuthInstance = !(
+  isCloudflareWorker && TCP_PROVIDERS.includes(envConfigs.database_provider)
+);
+
 let authInstance: any;
 let socialConfigsSignature = '';
 let emailEnabledLoaded = true;
@@ -129,7 +146,7 @@ export function getAuth(configs?: Record<string, string>) {
       !!configs.resend_sender_email
     : false;
 
-  authInstance = betterAuth({
+  const instance = betterAuth({
     appName: envConfigs.app_name,
     baseURL: envConfigs.auth_url || envConfigs.app_url,
     secret: envConfigs.auth_secret,
@@ -239,5 +256,6 @@ export function getAuth(configs?: Record<string, string>) {
     logger: { disabled: true },
   } satisfies BetterAuthOptions);
 
-  return authInstance;
+  if (canCacheAuthInstance) authInstance = instance;
+  return instance;
 }
