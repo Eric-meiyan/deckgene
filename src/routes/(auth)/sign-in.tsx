@@ -101,7 +101,10 @@ function SignInPage() {
           }
           setError(result.error.message || "Sign in failed");
         } else {
-          router.push(afterLoginUrl);
+          // Hard navigation so the destination reloads with a fresh session
+          // cookie — a client push would let the guard read a stale (logged-out)
+          // session store and bounce straight back to /sign-in.
+          window.location.assign(localizeHref(afterLoginUrl));
         }
       } catch (err: any) {
         setError(err.message || "Sign in failed");
