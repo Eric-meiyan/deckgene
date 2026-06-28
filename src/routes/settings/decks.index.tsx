@@ -156,6 +156,6 @@ function DecksPage() {
   );
 }
 
-export const Route = createFileRoute('/settings/decks')({
+export const Route = createFileRoute('/settings/decks/')({
   component: DecksPage,
 });
