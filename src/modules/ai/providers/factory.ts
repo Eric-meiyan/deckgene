@@ -9,6 +9,11 @@ import type { ImageProvider, LLMProvider, ProviderContext } from './types';
  * 注：env 读取为本地/Node 形态；Cloudflare 上由 server 把 env 注入 process.env。
  */
 function env(key: string): string | undefined {
+  // Cloudflare Workers：secrets/vars 在 binding env（server.ts 存于 __CF_ENV__）；
+  // 本地/Node：process.env。两处都查，保证两种运行时都能取到 key。
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cf = (globalThis as any).__CF_ENV__;
+  if (cf && cf[key] != null) return cf[key];
   return typeof process !== 'undefined' ? process.env?.[key] : undefined;
 }
 
