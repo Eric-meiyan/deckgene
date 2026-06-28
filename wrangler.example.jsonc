@@ -6,7 +6,11 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "shipany-tanstack",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_date": "2025-01-01",
+  // nodejs_compat_populate_process_env：把 vars/secrets 注入 process.env。
+  // 必需 —— src/config/index.ts 经 process.env 读 DATABASE_PROVIDER（缺了会回退
+  // sqlite+file: 导致 Workers 上 DB 全挂）、AUTH_SECRET、DEEPSEEK_API_KEY 等。
+  "compatibility_flags": ["nodejs_compat", "nodejs_compat_populate_process_env"],
   "observability": {
     "enabled": true,
   },
