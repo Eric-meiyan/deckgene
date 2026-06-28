@@ -67,7 +67,8 @@
     --card-foreground: oklch(0.275 0.007 60);
     --popover: oklch(0.988 0.003 75);
     --popover-foreground: oklch(0.275 0.007 60);
-    --primary: oklch(0.22 0.005 60);
+    /* deckgene brand — teal-green #25A18E (playful-marketing) */
+    --primary: oklch(0.62 0.105 178);
     --primary-foreground: oklch(0.985 0 0);
     --secondary: oklch(0.948 0.006 75);
     --secondary-foreground: oklch(0.275 0.007 60);
@@ -79,16 +80,16 @@
     --destructive-foreground: oklch(0.577 0.245 27.325);
     --border: oklch(0.908 0.005 75);
     --input: oklch(0.908 0.005 75);
-    --ring: oklch(0.708 0 0);
+    --ring: oklch(0.62 0.105 178);
     --chart-1: oklch(0.646 0.222 41.116);
     --chart-2: oklch(0.6 0.118 184.714);
     --chart-3: oklch(0.398 0.07 227.392);
     --chart-4: oklch(0.828 0.189 84.429);
     --chart-5: oklch(0.769 0.188 70.08);
-    --radius: 0.625rem;
+    --radius: 0.75rem;
     --sidebar: oklch(0.988 0.003 75);
     --sidebar-foreground: oklch(0.275 0.007 60);
-    --sidebar-primary: oklch(0.22 0.005 60);
+    --sidebar-primary: oklch(0.62 0.105 178);
     --sidebar-primary-foreground: oklch(0.985 0 0);
     --sidebar-accent: oklch(0.948 0.006 75);
     --sidebar-accent-foreground: oklch(0.275 0.007 60);
@@ -103,7 +104,7 @@
     --card-foreground: oklch(0.985 0 0);
     --popover: oklch(0.145 0 0);
     --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
+    --primary: oklch(0.7 0.12 178);
     --primary-foreground: oklch(0.205 0 0);
     --secondary: oklch(0.269 0 0);
     --secondary-foreground: oklch(0.985 0 0);
@@ -138,6 +139,63 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* ===== deckgene playful-marketing utilities ===== */
+  /* 品牌渐变 #10B981 → #25A18E */
+  :root {
+    --brand-from: oklch(0.696 0.17 162);
+    --brand-to: oklch(0.62 0.105 178);
+  }
+  /* 圆点网格背景 */
+  .dot-grid {
+    background-image: radial-gradient(
+      circle,
+      color-mix(in oklch, var(--foreground) 12%, transparent) 1px,
+      transparent 1px
+    );
+    background-size: 22px 22px;
+  }
+  /* 签名级大圆角 section/card（35px） */
+  .playful-card {
+    border-radius: 35px;
+  }
+  /* 品牌渐变填充（按钮 / 高亮块） */
+  .brand-gradient {
+    background-image: linear-gradient(
+      135deg,
+      var(--brand-from),
+      var(--brand-to)
+    );
+  }
+  .brand-gradient-text {
+    background-image: linear-gradient(
+      135deg,
+      var(--brand-from),
+      var(--brand-to)
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  /* 入场淡入（从下方 20px 升起） */
+  @keyframes deckgene-fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .fade-up {
+    animation: deckgene-fade-up 0.5s ease both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .fade-up {
+      animation: none;
+    }
   }
 
   @keyframes drift-a {
