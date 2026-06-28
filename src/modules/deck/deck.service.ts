@@ -102,3 +102,70 @@ export async function listDecks(userId: string): Promise<Deck[]> {
     .where(eq(deck.userId, userId))
     .orderBy(desc(deck.updatedAt));
 }
+
+/** 发布：status=published + 记录 publishedAt，live URL 生效。 */
+export async function publishDeck(
+  id: string,
+  userId: string
+): Promise<Deck | null> {
+  const [row] = await db()
+    .update(deck)
+    .set({ status: 'published', publishedAt: new Date() })
+    .where(and(eq(deck.id, id), eq(deck.userId, userId)))
+    .returning();
+  return row ?? null;
+}
+
+/** 取消发布：回 draft，live URL 立即停止解析。 */
+export async function unpublishDeck(
+  id: string,
+  userId: string
+): Promise<Deck | null> {
+  const [row] = await db()
+    .update(deck)
+    .set({ status: 'draft', publishedAt: null })
+    .where(and(eq(deck.id, id), eq(deck.userId, userId)))
+    .returning();
+  return row ?? null;
+}
+
+/** 删除 deck（slides 级联删除）。返回是否删除成功。 */
+export async function deleteDeck(id: string, userId: string): Promise<boolean> {
+  const rows = await db()
+    .delete(deck)
+    .where(and(eq(deck.id, id), eq(deck.userId, userId)))
+    .returning({ id: deck.id });
+  return rows.length > 0;
+}
+
+/** 序列化为对外 API 形状（见 docs/PRD.md §5.2）。 */
+export function toApiDeck(
+  d: Deck,
+  appUrl: string,
+  slides?: Slide[]
+): Record<string, unknown> {
+  return {
+    id: d.id,
+    title: d.title,
+    slug: d.slug,
+    status: d.status,
+    visibility: d.visibility,
+    brand_id: d.brandId,
+    locale: d.locale,
+    url: d.status === 'published' ? `${appUrl}/d/${d.slug}` : null,
+    created_at: d.createdAt,
+    updated_at: d.updatedAt,
+    published_at: d.publishedAt,
+    ...(slides
+      ? {
+          slides: slides.map((s) => ({
+            id: s.id,
+            slide_type: s.slideType,
+            order: s.order,
+            content: s.content,
+            notes: s.notes,
+          })),
+        }
+      : {}),
+  };
+}
