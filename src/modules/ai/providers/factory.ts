@@ -30,10 +30,12 @@ export function getLLMProvider(ctx?: ProviderContext): LLMProvider {
     case 'deepseek': {
       const key = ctx?.apiKey ?? env('DEEPSEEK_API_KEY');
       if (!key) throw new Error('missing DEEPSEEK_API_KEY (or BYOK apiKey)');
+      // DeepSeek 不支持 json_schema，用 json_object 模式（schema 注入 prompt）
       return new OpenAIProvider(
         key,
         model ?? 'deepseek-chat',
-        'https://api.deepseek.com/chat/completions'
+        'https://api.deepseek.com/chat/completions',
+        'json_object'
       );
     }
     default:
