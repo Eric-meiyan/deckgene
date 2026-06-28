@@ -6,6 +6,7 @@ import {
   Key,
   LayoutDashboard,
   LifeBuoy,
+  Presentation,
   Receipt,
   User,
 } from 'lucide-react';
@@ -26,6 +27,12 @@ function SettingsLayout() {
       href: '/settings',
       label: m['settings.nav.overview'](),
       icon: LayoutDashboard,
+      group,
+    },
+    {
+      href: '/settings/decks',
+      label: m['settings.nav.decks'](),
+      icon: Presentation,
       group,
     },
     {

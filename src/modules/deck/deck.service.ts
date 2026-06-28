@@ -5,6 +5,9 @@ import { db } from '@/core/db';
 import { deck, slide, type Deck, type Slide } from '@/config/db/schema';
 
 import { makeSlug } from './job.service';
+// ─── Slide 编辑（控制台编辑器 / §9.5）───────────────────────────────────────
+
+import { getSlideTemplate, validateSlideContent } from './templates/registry';
 
 /**
  * Deck / Slide 数据服务（见 docs/PRD.md §5 / §9.4）。
@@ -159,6 +162,126 @@ export async function deleteDeck(id: string, userId: string): Promise<boolean> {
     .where(and(eq(deck.id, id), eq(deck.userId, userId)))
     .returning({ id: deck.id });
   return rows.length > 0;
+}
+
+/** 校验 deck 归属，返回 deck 行或 null。 */
+async function ownDeck(deckId: string, userId: string): Promise<Deck | null> {
+  const [row] = await db()
+    .select()
+    .from(deck)
+    .where(and(eq(deck.id, deckId), eq(deck.userId, userId)))
+    .limit(1);
+  return row ?? null;
+}
+
+/** 更新一页的 content（按 slide_type schema 校验）/ notes。 */
+export async function updateSlide(
+  deckId: string,
+  slideId: string,
+  userId: string,
+  patch: { content?: Record<string, unknown>; notes?: string }
+): Promise<Slide | null> {
+  const d = await ownDeck(deckId, userId);
+  if (!d) return null;
+  const [existing] = await db()
+    .select()
+    .from(slide)
+    .where(and(eq(slide.id, slideId), eq(slide.deckId, deckId)))
+    .limit(1);
+  if (!existing) return null;
+
+  const set: Partial<typeof slide.$inferInsert> = {};
+  if (patch.content !== undefined) {
+    const v = validateSlideContent(existing.slideType, patch.content);
+    if (!v.ok) throw new Error(`invalid content: ${v.error}`);
+    set.content = patch.content;
+  }
+  if (patch.notes !== undefined) set.notes = patch.notes;
+
+  const [row] = await db()
+    .update(slide)
+    .set(set)
+    .where(eq(slide.id, slideId))
+    .returning();
+  return row ?? null;
+}
+
+/** 新增一页（默认追加到末尾；可指定 index 插入）。 */
+export async function addSlide(
+  deckId: string,
+  userId: string,
+  input: { slideType: string; content: Record<string, unknown>; index?: number }
+): Promise<Slide | null> {
+  const d = await ownDeck(deckId, userId);
+  if (!d) return null;
+  // 加页不强校验（编辑器「先加空页再填」流程）；保存(updateSlide)时才按 schema 校验。
+  if (!getSlideTemplate(input.slideType)) {
+    throw new Error(`unknown slide_type: ${input.slideType}`);
+  }
+
+  const rows = await db()
+    .select()
+    .from(slide)
+    .where(eq(slide.deckId, deckId))
+    .orderBy(asc(slide.order));
+  const at = input.index ?? rows.length;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return db().transaction(async (tx: any) => {
+    // 给插入点之后的页 order +1
+    for (let i = rows.length - 1; i >= at; i--) {
+      await tx
+        .update(slide)
+        .set({ order: i + 1 })
+        .where(eq(slide.id, rows[i].id));
+    }
+    const [row] = await tx
+      .insert(slide)
+      .values({
+        id: `sec_${nanoid(10)}`,
+        deckId,
+        slideType: input.slideType,
+        order: at,
+        content: input.content,
+      })
+      .returning();
+    return row ?? null;
+  });
+}
+
+/** 删除一页。 */
+export async function deleteSlide(
+  deckId: string,
+  slideId: string,
+  userId: string
+): Promise<boolean> {
+  const d = await ownDeck(deckId, userId);
+  if (!d) return false;
+  const rows = await db()
+    .delete(slide)
+    .where(and(eq(slide.id, slideId), eq(slide.deckId, deckId)))
+    .returning({ id: slide.id });
+  return rows.length > 0;
+}
+
+/** 按给定 id 顺序重排（仅接受该 deck 的 slide id）。 */
+export async function reorderSlides(
+  deckId: string,
+  userId: string,
+  orderedIds: string[]
+): Promise<boolean> {
+  const d = await ownDeck(deckId, userId);
+  if (!d) return false;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await db().transaction(async (tx: any) => {
+    for (let i = 0; i < orderedIds.length; i++) {
+      await tx
+        .update(slide)
+        .set({ order: i })
+        .where(and(eq(slide.id, orderedIds[i]), eq(slide.deckId, deckId)));
+    }
+  });
+  return true;
 }
 
 /** 序列化为对外 API 形状（见 docs/PRD.md §5.2）。 */
