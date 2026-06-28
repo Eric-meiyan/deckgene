@@ -16,8 +16,10 @@ const DECK_CREDITS = 100;
 
 /**
  * POST /api/v1/generate  (见 docs/PRD.md §9.1)
- * 文本 → 异步生成 deck。立即返回 202 + job，客户端轮询 GET /api/v1/jobs/{id}。
- * 本地为 fire-and-forget；部署 CF 时改为触发 Cloudflare Workflow（waitUntil）。
+ * 文本 → 同步生成 deck：请求内 await 跑完管线后返回 { job_id, status, result }。
+ * 同步实现保证 Cloudflare Workers 可靠（生成耗时主要为 LLM I/O，不计 CPU 时间）。
+ * job 记录保留，GET /v1/jobs/{id} 仍可查。批量/超长任务的异步化（Cloudflare
+ * Workflows）列为未来升级项。
  */
 async function POST({ request }: { request: Request }) {
   const auth = await requireApiKey(request);
@@ -59,34 +61,32 @@ async function POST({ request }: { request: Request }) {
     creditsHeld: DECK_CREDITS,
   });
 
-  // fire-and-forget：不阻塞响应（CF：用 ctx.waitUntil / Workflow）
-  void (async () => {
-    try {
-      await setRunning(job.id);
-      const deck = await generateDeck({
-        userId,
-        input,
-        title,
-        brandId,
-        ctx,
-      });
-      await setSucceeded(job.id, {
-        deck_id: deck.id,
-        slug: deck.slug,
-        slides: deck.slides.length,
-      });
-    } catch (e) {
-      await setFailed(job.id, {
-        code: 'generation_failed',
-        message: (e as Error).message?.slice(0, 500) ?? 'unknown error',
-      });
-    }
-  })();
-
-  return v1Json(
-    { job_id: job.id, status: 'queued', poll: `/api/v1/jobs/${job.id}` },
-    202
-  );
+  // 同步执行：在请求内 await 跑完管线（CF 可靠、本地可测，见 docs/PRD.md §7）。
+  // 生成耗时几乎全是等 LLM 的 I/O（不计 CPU 时间），Workers 支持。
+  // job 记录仍保留，GET /v1/jobs/{id} 可查；未来批量/超长任务再升级为 Workflow。
+  try {
+    await setRunning(job.id);
+    const deck = await generateDeck({ userId, input, title, brandId, ctx });
+    const result = {
+      deck_id: deck.id,
+      slug: deck.slug,
+      slides: deck.slides.length,
+    };
+    await setSucceeded(job.id, result);
+    return v1Json({
+      job_id: job.id,
+      status: 'succeeded',
+      result,
+      poll: `/api/v1/jobs/${job.id}`,
+    });
+  } catch (e) {
+    const error = {
+      code: 'generation_failed',
+      message: (e as Error).message?.slice(0, 500) ?? 'unknown error',
+    };
+    await setFailed(job.id, error);
+    return v1Json({ job_id: job.id, status: 'failed', error });
+  }
 }
 
 export const Route = createFileRoute('/api/v1/generate')({
