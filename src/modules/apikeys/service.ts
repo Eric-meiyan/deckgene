@@ -4,8 +4,9 @@ import { and, count, eq, isNull, like, type SQL } from 'drizzle-orm';
 import { db } from '@/core/db';
 import { apikey } from '@/config/db/schema';
 import { getUuid } from '@/lib/hash';
+import { v1Error } from '@/lib/v1';
 
-const KEY_PREFIX = 'sk_';
+const KEY_PREFIX = 'hd_live_';
 const KEY_PREVIEW_LEN = 8; // chars of randomness shown in the prefix
 
 function hashKey(key: string): string {
@@ -13,7 +14,7 @@ function hashKey(key: string): string {
 }
 
 function generateKey(): { key: string; keyHash: string; keyPrefix: string } {
-  // 32 random bytes → ~43 chars base64url, plus the literal "sk_" prefix
+  // 32 random bytes → ~43 chars base64url, plus the literal "hd_live_" prefix
   const rand = crypto.randomBytes(32).toString('base64url');
   const key = `${KEY_PREFIX}${rand}`;
   return {
@@ -123,4 +124,31 @@ export async function validate(key: string): Promise<string | null> {
     .limit(1);
 
   return row?.userId ?? null;
+}
+
+/**
+ * `/api/v1` 公共 API 鉴权：从 `Authorization: Bearer hd_live_...` 取 key 并校验。
+ * 成功返回 `{ userId }`，失败返回标准 v1 错误 Response（调用方直接 return）。
+ */
+export async function requireApiKey(
+  request: Request
+): Promise<{ userId: string } | Response> {
+  const authz = request.headers.get('authorization') ?? '';
+  const match = authz.match(/^Bearer\s+(.+)$/i);
+  if (!match) {
+    return v1Error(
+      'invalid_key',
+      'Missing or malformed Authorization header. Expected: Bearer hd_live_...',
+      401
+    );
+  }
+  const userId = await validate(match[1].trim());
+  if (!userId) {
+    return v1Error(
+      'invalid_key',
+      'API key is missing, invalid, or revoked',
+      401
+    );
+  }
+  return { userId };
 }
