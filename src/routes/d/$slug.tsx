@@ -9,7 +9,7 @@ import { DeckRenderer } from '@/components/deck/deck-renderer';
  */
 function DeckPage() {
   const { deck } = Route.useLoaderData();
-  return <DeckRenderer slides={deck.slides} />;
+  return <DeckRenderer slides={deck.slides} brand={deck.brand} />;
 }
 
 export const Route = createFileRoute('/d/$slug')({

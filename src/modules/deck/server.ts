@@ -15,11 +15,16 @@ export interface PublicSlide {
   content: JsonObject;
   notes: string | null;
 }
+export interface PublicBrand {
+  palette: Record<string, string> | null;
+  typography: Record<string, string> | null;
+}
 export interface PublicDeck {
   id: string;
   title: string;
   slug: string;
   locale: string;
+  brand: PublicBrand | null;
   slides: PublicSlide[];
 }
 
@@ -40,11 +45,26 @@ export const getPublicDeckFn = createServerFn()
       return null;
     }
 
+    // 取关联 brand 的 palette/typography（公开渲染，无 userId）
+    let brand: PublicBrand | null = null;
+    if (deck.brandId) {
+      const { db } = await import('@/core/db');
+      const { brand: brandTable } = await import('@/config/db/schema');
+      const { eq } = await import('drizzle-orm');
+      const [b] = await db()
+        .select()
+        .from(brandTable)
+        .where(eq(brandTable.id, deck.brandId))
+        .limit(1);
+      if (b) brand = { palette: b.palette, typography: b.typography };
+    }
+
     return {
       id: deck.id,
       title: deck.title,
       slug: deck.slug,
       locale: deck.locale,
+      brand,
       slides: deck.slides.map((s) => ({
         id: s.id,
         slide_type: s.slideType,

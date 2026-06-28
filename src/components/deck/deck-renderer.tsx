@@ -6,13 +6,45 @@ export interface RenderSlide {
   content: Record<string, unknown>;
 }
 
+export interface RenderBrand {
+  palette: Record<string, string> | null;
+  typography: Record<string, string> | null;
+}
+
+/**
+ * 把品牌 palette 注入为 CSS 变量，覆盖默认青绿主题（白标换肤）。
+ * 仅注入存在的键；未提供则用 deckgene 默认主题。
+ */
+function brandStyle(brand?: RenderBrand | null): React.CSSProperties {
+  const p = brand?.palette;
+  if (!p) return {};
+  const style: Record<string, string> = {};
+  if (p.primary) {
+    style['--primary'] = p.primary;
+    style['--brand-to'] = p.primary;
+    style['--brand-from'] = p.secondary || p.accent || p.primary;
+  }
+  if (p.background) style['--background'] = p.background;
+  if (p.text) style['--foreground'] = p.text;
+  return style as React.CSSProperties;
+}
+
 /**
  * 把一份 deck 的有序 slides 渲染为可滚动的网页演示稿（live URL 页面用）。
- * 白标：默认无 deckgene 水印。
+ * 白标：默认无 deckgene 水印；brand 提供时按其 palette 换肤。
  */
-export function DeckRenderer({ slides }: { slides: RenderSlide[] }) {
+export function DeckRenderer({
+  slides,
+  brand,
+}: {
+  slides: RenderSlide[];
+  brand?: RenderBrand | null;
+}) {
   return (
-    <div className="dot-grid bg-background min-h-screen w-full py-10">
+    <div
+      className="dot-grid bg-background min-h-screen w-full py-10"
+      style={brandStyle(brand)}
+    >
       <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4">
         {slides.map((s) => (
           <section key={s.id} className="fade-up">

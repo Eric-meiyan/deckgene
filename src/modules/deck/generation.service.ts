@@ -141,6 +141,22 @@ export async function generateDeck(
 ): Promise<DeckWithSlides> {
   const provider = deps.provider ?? getLLMProvider(params.ctx);
 
+  // 0. 解析 brand：未显式指定则用工作区 active brand，并取其 tone 注入填充
+  let brandId = params.brandId ?? null;
+  let tone = params.tone;
+  if (!brandId) {
+    const { getActiveBrand } = await import('./brand.service');
+    const active = await getActiveBrand(params.userId);
+    if (active) {
+      brandId = active.id;
+      tone = tone ?? active.tone ?? undefined;
+    }
+  } else if (!tone) {
+    const { getBrand } = await import('./brand.service');
+    const b = await getBrand(brandId, params.userId);
+    tone = b?.tone ?? undefined;
+  }
+
   // 1. plan
   const plan = await planDeck(provider, params.input, { title: params.title });
   const deckTitle = params.title ?? plan.title;
@@ -150,7 +166,7 @@ export async function generateDeck(
     plan.slides.map((s) =>
       fillSlide(provider, s.slide_type, s.brief, {
         deckTitle,
-        tone: params.tone,
+        tone,
       })
     )
   );
@@ -159,7 +175,7 @@ export async function generateDeck(
   return createDeckWithSlides({
     userId: params.userId,
     title: deckTitle,
-    brandId: params.brandId,
+    brandId,
     locale: params.locale,
     sourceInput: params.input,
     slides,
