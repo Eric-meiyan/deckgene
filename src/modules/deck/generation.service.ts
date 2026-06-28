@@ -1,0 +1,167 @@
+import { z } from 'zod';
+
+import {
+  getLLMProvider,
+  type LLMProvider,
+  type ProviderContext,
+} from '@/modules/ai/providers';
+
+import {
+  createDeckWithSlides,
+  type DeckWithSlides,
+  type NewSlideInput,
+} from './deck.service';
+import {
+  getSlideTemplate,
+  listSlideTemplates,
+  listSlideTemplatesCompact,
+} from './templates/registry';
+
+/**
+ * 生成管线（见 docs/PRD.md §7）。核心机制：先按 whenToUse 选模板 → 再按固定 schema 填空。
+ * Provider 可注入（测试用 stub；生产用 getLLMProvider + BYOK）。
+ * 本地版为 inline 执行；部署 CF 时迁移为 Cloudflare Workflow（plan/fill/assemble 为 step）。
+ */
+
+const MAX_SLIDES = 20;
+
+/** 动态构建 plan schema：slide_type 限定为注册表已知 key。 */
+function buildPlanSchema() {
+  const keys = listSlideTemplates().map((t) => t.key) as [string, ...string[]];
+  return z.object({
+    title: z.string().max(120),
+    slides: z
+      .array(
+        z.object({
+          slide_type: z.enum(keys),
+          brief: z.string().max(400),
+        })
+      )
+      .min(3)
+      .max(MAX_SLIDES),
+  });
+}
+
+export type DeckPlan = z.infer<ReturnType<typeof buildPlanSchema>>;
+
+/** 第 1 步：规划——按叙事弧线选模板 + 每页 brief。 */
+export async function planDeck(
+  provider: LLMProvider,
+  input: string,
+  opts: { title?: string } = {}
+): Promise<DeckPlan> {
+  const catalog = listSlideTemplatesCompact()
+    .map((t) => `- ${t.key} [${t.category}]: ${t.whenToUse}`)
+    .join('\n');
+
+  const system = [
+    'You are a presentation architect for deckgene.',
+    'Plan a deck as an ordered list of slides following the narrative arc:',
+    'Open → Argue → Show → Close.',
+    'Choose each slide_type ONLY from the catalog below, by its whenToUse.',
+    'Do not repeat content across slides. Aim for 5–15 slides unless the input demands otherwise.',
+    '',
+    'Slide type catalog:',
+    catalog,
+  ].join('\n');
+
+  const prompt = [
+    opts.title ? `Deck title (suggested): ${opts.title}` : '',
+    'Source material:',
+    input,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  return provider.generateStructured({
+    system,
+    prompt,
+    schema: buildPlanSchema(),
+    schemaName: 'deck_plan',
+  });
+}
+
+/** 第 2 步：填空——按所选 slide_type 的固定 schema 生成 content（含一次重试 + 降级）。 */
+export async function fillSlide(
+  provider: LLMProvider,
+  slideType: string,
+  brief: string,
+  ctx: { deckTitle: string; tone?: string }
+): Promise<NewSlideInput> {
+  const tpl = getSlideTemplate(slideType);
+  if (!tpl) {
+    // 未知类型：降级为 statement 占位
+    return {
+      slideType: 'statement',
+      content: { statement: brief.slice(0, 220) },
+    };
+  }
+
+  const system = [
+    `You are writing the content for one slide of the deck "${ctx.deckTitle}".`,
+    `Slide type: ${tpl.key} — ${tpl.whenToUse}`,
+    ctx.tone ? `Brand tone: ${ctx.tone}.` : '',
+    'Fill the structured fields concisely. Respect every field length limit.',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const content = (await provider.generateStructured({
+        system,
+        prompt: `Slide brief: ${brief}`,
+        schema: tpl.schema,
+        schemaName: tpl.key,
+      })) as Record<string, unknown>;
+      return { slideType: tpl.key, content };
+    } catch {
+      // retry once, then fall through to placeholder
+    }
+  }
+  // 降级占位（保证整 deck 不因单页失败而崩）
+  return {
+    slideType: 'statement',
+    content: { statement: brief.slice(0, 220) },
+  };
+}
+
+/** 整体编排：plan → 并发 fill → assemble（落库）。 */
+export async function generateDeck(
+  params: {
+    userId: string;
+    input: string;
+    title?: string;
+    brandId?: string | null;
+    locale?: string;
+    ctx?: ProviderContext;
+    tone?: string;
+  },
+  deps: { provider?: LLMProvider } = {}
+): Promise<DeckWithSlides> {
+  const provider = deps.provider ?? getLLMProvider(params.ctx);
+
+  // 1. plan
+  const plan = await planDeck(provider, params.input, { title: params.title });
+  const deckTitle = params.title ?? plan.title;
+
+  // 2. fill（并发 fan-out）
+  const slides = await Promise.all(
+    plan.slides.map((s) =>
+      fillSlide(provider, s.slide_type, s.brief, {
+        deckTitle,
+        tone: params.tone,
+      })
+    )
+  );
+
+  // 3. assemble（落库）
+  return createDeckWithSlides({
+    userId: params.userId,
+    title: deckTitle,
+    brandId: params.brandId,
+    locale: params.locale,
+    sourceInput: params.input,
+    slides,
+  });
+}
