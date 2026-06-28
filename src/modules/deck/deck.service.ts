@@ -94,6 +94,29 @@ export async function getDeckWithSlides(
   return { ...deckRow, slides };
 }
 
+/**
+ * 公开渲染用：按 slug 取**已发布**的 deck（含有序 slides），无 userId 限制。
+ * 仅返回 status=published；visibility/过期 由调用方处理。
+ */
+export async function getPublishedDeckBySlug(
+  slug: string
+): Promise<DeckWithSlides | null> {
+  const [deckRow] = await db()
+    .select()
+    .from(deck)
+    .where(and(eq(deck.slug, slug), eq(deck.status, 'published')))
+    .limit(1);
+  if (!deckRow) return null;
+
+  const slides = await db()
+    .select()
+    .from(slide)
+    .where(eq(slide.deckId, deckRow.id))
+    .orderBy(asc(slide.order));
+
+  return { ...deckRow, slides };
+}
+
 /** 列出用户的 decks（不含 slides）。 */
 export async function listDecks(userId: string): Promise<Deck[]> {
   return db()
