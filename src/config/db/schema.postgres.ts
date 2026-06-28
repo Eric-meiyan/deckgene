@@ -10,6 +10,7 @@ import {
   boolean,
   index,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -633,3 +634,120 @@ export type InviteCode = typeof inviteCode.$inferSelect;
 export type NewInviteCode = typeof inviteCode.$inferInsert;
 export type UserInvite = typeof userInvite.$inferSelect;
 export type NewUserInvite = typeof userInvite.$inferInsert;
+
+// ─── deckgene: brands / decks / slides / jobs ─────────────────────────────────
+// 见 docs/PRD.md §5 数据模型。deck = 有序 typed slides；content/palette 等用 jsonb。
+
+export const brand = table(
+  'brand',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    sourceUrl: text('source_url'),
+    // 视觉令牌：{ primary, secondary, accent, background, text, ... }
+    palette: jsonb('palette').$type<Record<string, string>>(),
+    // { heading_font, body_font, base_size, scale }
+    typography: jsonb('typography').$type<Record<string, string>>(),
+    tone: text('tone'),
+    logoUrl: text('logo_url'),
+    // 工作区默认品牌（每 user 仅一个 true）
+    isActive: boolean('is_active').notNull().default(false),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => [index('idx_brand_user').on(t.userId)]
+);
+
+export const deck = table(
+  'deck',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    brandId: text('brand_id').references(() => brand.id, {
+      onDelete: 'set null',
+    }),
+    title: text('title').notNull(),
+    slug: text('slug').notNull().unique(),
+    // draft | published
+    status: text('status').notNull().default('draft'),
+    // unlisted(默认) | public | password | expiring
+    visibility: text('visibility').notNull().default('unlisted'),
+    passwordHash: text('password_hash'),
+    expiresAt: timestamp('expires_at'),
+    // 默认 true，输出 noindex 禁止搜索引擎收录
+    noIndex: boolean('no_index').notNull().default(true),
+    locale: text('locale').notNull().default('en'),
+    sourceInput: text('source_input'),
+    publishedAt: timestamp('published_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => [
+    index('idx_deck_user').on(t.userId),
+    index('idx_deck_slug').on(t.slug),
+  ]
+);
+
+export const slide = table(
+  'slide',
+  {
+    id: text('id').primaryKey(),
+    deckId: text('deck_id')
+      .notNull()
+      .references(() => deck.id, { onDelete: 'cascade' }),
+    // 模板类型 key（见 src/modules/deck/templates/registry）
+    slideType: text('slide_type').notNull(),
+    order: integer('order').notNull().default(0),
+    // 结构随 slide_type 变化，须通过该类型的 zod schema 校验
+    content: jsonb('content').$type<Record<string, unknown>>().notNull(),
+    notes: text('notes'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => [index('idx_slide_deck_order').on(t.deckId, t.order)]
+);
+
+export const job = table(
+  'job',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    // generate | image | brand_extract | export
+    type: text('type').notNull(),
+    // queued | running | succeeded | failed
+    status: text('status').notNull().default('queued'),
+    workflowId: text('workflow_id'),
+    input: jsonb('input').$type<Record<string, unknown>>(),
+    result: jsonb('result').$type<Record<string, unknown>>(),
+    error: jsonb('error').$type<{ code: string; message: string }>(),
+    // 预扣 credits（失败退还）
+    creditsHeld: integer('credits_held').notNull().default(0),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => [index('idx_job_user_status').on(t.userId, t.status)]
+);
+
+export type Brand = typeof brand.$inferSelect;
+export type NewBrand = typeof brand.$inferInsert;
+export type Deck = typeof deck.$inferSelect;
+export type NewDeck = typeof deck.$inferInsert;
+export type Slide = typeof slide.$inferSelect;
+export type NewSlide = typeof slide.$inferInsert;
+export type Job = typeof job.$inferSelect;
+export type NewJob = typeof job.$inferInsert;
