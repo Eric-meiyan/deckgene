@@ -870,5 +870,15 @@
   "settings.home.p_decks_desc": "创建、编辑、发布与分享 deck。",
   "settings.home.p_brands_desc": "Brand Kernel —— 提取一次，全局锁定。",
   "settings.home.p_mcp_desc": "让 Claude 等助手通过 MCP 接入。",
-  "settings.home.p_api_desc": "程序化生成 deck。"
+  "settings.home.p_api_desc": "程序化生成 deck。",
+  "settings.brands.edit": "编辑",
+  "settings.brands.duplicate": "复制",
+  "settings.brands.export": "导出 JSON",
+  "settings.brands.save": "保存",
+  "settings.brands.edit_title": "编辑品牌",
+  "settings.brands.secondary": "辅助色",
+  "settings.brands.accent": "强调色",
+  "settings.brands.background": "背景色",
+  "settings.brands.text": "文字色",
+  "settings.brands.saved": "已保存"
 }

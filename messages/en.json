@@ -870,5 +870,15 @@
   "settings.home.p_decks_desc": "Create, edit, publish and share decks.",
   "settings.home.p_brands_desc": "Brand Kernel — extract once, locked everywhere.",
   "settings.home.p_mcp_desc": "Connect Claude and assistants via MCP.",
-  "settings.home.p_api_desc": "Generate decks programmatically."
+  "settings.home.p_api_desc": "Generate decks programmatically.",
+  "settings.brands.edit": "Edit",
+  "settings.brands.duplicate": "Duplicate",
+  "settings.brands.export": "Export JSON",
+  "settings.brands.save": "Save",
+  "settings.brands.edit_title": "Edit brand",
+  "settings.brands.secondary": "Secondary",
+  "settings.brands.accent": "Accent",
+  "settings.brands.background": "Background",
+  "settings.brands.text": "Text",
+  "settings.brands.saved": "Saved"
 }

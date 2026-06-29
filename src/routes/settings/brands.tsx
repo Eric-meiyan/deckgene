@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { Sparkles, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { apiDelete, apiGet, apiPost } from '@/lib/api-client';
+import { apiDelete, apiGet, apiPatch, apiPost } from '@/lib/api-client';
 import { m } from '@/paraglide/messages.js';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -23,14 +30,113 @@ interface Brand {
   id: string;
   name: string;
   palette: Record<string, string> | null;
+  typography: Record<string, string> | null;
   tone: string | null;
   source_url: string | null;
   is_active: boolean;
 }
 
+const PALETTE_KEYS = [
+  ['primary', 'settings.brands.primary'],
+  ['secondary', 'settings.brands.secondary'],
+  ['accent', 'settings.brands.accent'],
+  ['background', 'settings.brands.background'],
+  ['text', 'settings.brands.text'],
+] as const;
+
+function SwatchStrip({ palette }: { palette: Record<string, string> | null }) {
+  const colors = PALETTE_KEYS.map(([k]) => palette?.[k]).filter(
+    Boolean
+  ) as string[];
+  if (colors.length === 0) colors.push('#cccccc');
+  return (
+    <div className="flex h-10 overflow-hidden rounded-lg border">
+      {colors.map((c, i) => (
+        <div key={i} className="flex-1" style={{ background: c }} />
+      ))}
+    </div>
+  );
+}
+
+function EditBrandDialog({
+  brand,
+  onClose,
+}: {
+  brand: Brand;
+  onClose: () => void;
+}) {
+  const qc = useQueryClient();
+  const [name, setName] = useState(brand.name);
+  const [tone, setTone] = useState(brand.tone ?? '');
+  const [palette, setPalette] = useState<Record<string, string>>({
+    primary: brand.palette?.primary ?? '#25a18e',
+    secondary: brand.palette?.secondary ?? '#10b981',
+    accent: brand.palette?.accent ?? '#f59e0b',
+    background: brand.palette?.background ?? '#ffffff',
+    text: brand.palette?.text ?? '#1a1a1a',
+  });
+
+  const save = useMutation({
+    mutationFn: () =>
+      apiPatch(`/api/brands/${brand.id}`, { name, palette, tone }),
+    onSuccess: () => {
+      toast.success(m['settings.brands.saved']());
+      qc.invalidateQueries({ queryKey: ['brands'] });
+      onClose();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{m['settings.brands.edit_title']()}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <Input value={name} onChange={(e) => setName(e.target.value)} />
+          <div className="grid grid-cols-1 gap-2">
+            {PALETTE_KEYS.map(([k, label]) => (
+              <div key={k} className="flex items-center gap-3">
+                <span className="text-muted-foreground w-24 text-sm">
+                  {m[label]()}
+                </span>
+                <input
+                  type="color"
+                  value={palette[k]}
+                  onChange={(e) =>
+                    setPalette((p) => ({ ...p, [k]: e.target.value }))
+                  }
+                  className="h-8 w-14 rounded border"
+                />
+                <span className="text-muted-foreground text-xs">
+                  {palette[k]}
+                </span>
+              </div>
+            ))}
+          </div>
+          <Input
+            placeholder={m['settings.brands.tone_ph']()}
+            value={tone}
+            onChange={(e) => setTone(e.target.value)}
+          />
+          <Button
+            className="w-full"
+            disabled={save.isPending}
+            onClick={() => save.mutate()}
+          >
+            {m['settings.brands.save']()}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function BrandsPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Brand | null>(null);
   const [url, setUrl] = useState('');
   const [name, setName] = useState('');
   const [primary, setPrimary] = useState('#25a18e');
@@ -40,12 +146,13 @@ function BrandsPage() {
     queryKey: ['brands'],
     queryFn: () => apiGet<Brand[]>('/api/brands'),
   });
+  const refresh = () => qc.invalidateQueries({ queryKey: ['brands'] });
   const done = () => {
     setOpen(false);
     setUrl('');
     setName('');
     setTone('');
-    qc.invalidateQueries({ queryKey: ['brands'] });
+    refresh();
   };
   const extract = useMutation({
     mutationFn: () => apiPost('/api/brands/extract', { url }),
@@ -65,14 +172,36 @@ function BrandsPage() {
   const setActive = useMutation({
     mutationFn: (id: string) =>
       apiPost('/api/brands/set-active', { brand_id: id }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['brands'] }),
+    onSuccess: refresh,
     onError: (e: Error) => toast.error(e.message),
   });
   const del = useMutation({
     mutationFn: (id: string) => apiDelete(`/api/brands/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['brands'] }),
+    onSuccess: refresh,
     onError: (e: Error) => toast.error(e.message),
   });
+  const duplicate = useMutation({
+    mutationFn: (b: Brand) =>
+      apiPost('/api/brands', {
+        name: `${b.name} copy`,
+        palette: b.palette,
+        typography: b.typography,
+        tone: b.tone,
+      }),
+    onSuccess: refresh,
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  function exportJson(b: Brand) {
+    const blob = new Blob([JSON.stringify(b, null, 2)], {
+      type: 'application/json',
+    });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${b.name}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
 
   return (
     <div className="space-y-6">
@@ -124,9 +253,9 @@ function BrandsPage() {
                   onChange={(e) => setName(e.target.value)}
                 />
                 <div className="flex items-center gap-2">
-                  <label className="text-sm">
+                  <span className="text-sm">
                     {m['settings.brands.primary']()}
-                  </label>
+                  </span>
                   <input
                     type="color"
                     value={primary}
@@ -163,45 +292,65 @@ function BrandsPage() {
         </Card>
       )}
 
-      <div className="grid gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         {list.data?.map((b) => (
           <Card key={b.id}>
-            <CardContent className="flex items-center gap-4 py-4">
-              <span
-                className="size-10 shrink-0 rounded-lg border"
-                style={{ background: b.palette?.primary ?? '#ccc' }}
-              />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="truncate font-medium">{b.name}</span>
-                  {b.is_active && (
-                    <Badge>{m['settings.brands.active']()}</Badge>
-                  )}
+            <CardContent className="space-y-3 py-4">
+              <SwatchStrip palette={b.palette} />
+              <div className="flex items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate font-medium">{b.name}</span>
+                    {b.is_active && (
+                      <Badge>{m['settings.brands.active']()}</Badge>
+                    )}
+                  </div>
+                  <div className="text-muted-foreground truncate text-xs">
+                    {b.typography?.heading_font || 'Inter'}
+                    {b.tone ? ` · ${b.tone}` : ''}
+                  </div>
                 </div>
-                <div className="text-muted-foreground truncate text-xs">
-                  {b.tone || b.source_url || b.palette?.primary}
-                </div>
+                {!b.is_active && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setActive.mutate(b.id)}
+                  >
+                    {m['settings.brands.set_active']()}
+                  </Button>
+                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="text-muted-foreground hover:text-foreground inline-flex size-8 items-center justify-center rounded-md">
+                    <MoreHorizontal className="size-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setEditing(b)}>
+                      {m['settings.brands.edit']()}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => duplicate.mutate(b)}>
+                      {m['settings.brands.duplicate']()}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => exportJson(b)}>
+                      {m['settings.brands.export']()}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => del.mutate(b.id)}
+                    >
+                      {m['settings.brands.delete']()}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-              {!b.is_active && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setActive.mutate(b.id)}
-                >
-                  {m['settings.brands.set_active']()}
-                </Button>
-              )}
-              <button
-                className="text-muted-foreground hover:text-destructive"
-                onClick={() => del.mutate(b.id)}
-                aria-label="delete"
-              >
-                <Trash2 className="size-4" />
-              </button>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      {editing && (
+        <EditBrandDialog brand={editing} onClose={() => setEditing(null)} />
+      )}
     </div>
   );
 }
