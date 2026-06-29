@@ -20,6 +20,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 
 interface DeckRow {
@@ -36,7 +37,9 @@ function DecksPage() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
+  const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
+  const [reading, setReading] = useState(false);
 
   const list = useQuery({
     queryKey: ['decks'],
@@ -45,16 +48,35 @@ function DecksPage() {
 
   const gen = useMutation({
     mutationFn: () =>
-      apiPost<{ deck_id: string }>('/api/decks/generate', { input, title }),
+      apiPost<{ deck_id: string }>('/api/decks/generate', {
+        input: input || undefined,
+        url: url || undefined,
+        title,
+      }),
     onSuccess: (d) => {
       setOpen(false);
       setInput('');
+      setUrl('');
       setTitle('');
       qc.invalidateQueries({ queryKey: ['decks'] });
       router.push(`/settings/decks/${d.deck_id}`);
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setReading(true);
+    try {
+      const text = await f.text();
+      setInput(text.slice(0, 8000));
+    } catch {
+      toast.error('read file failed');
+    } finally {
+      setReading(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -80,16 +102,55 @@ function DecksPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
               />
-              <Textarea
-                rows={6}
-                placeholder={m['settings.decks.input_ph']()}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-              />
+              <Tabs defaultValue="text">
+                <TabsList className="w-full">
+                  <TabsTrigger value="text" className="flex-1">
+                    {m['settings.decks.tab_text']()}
+                  </TabsTrigger>
+                  <TabsTrigger value="url" className="flex-1">
+                    {m['settings.decks.tab_url']()}
+                  </TabsTrigger>
+                  <TabsTrigger value="file" className="flex-1">
+                    {m['settings.decks.tab_file']()}
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="text" className="pt-3">
+                  <Textarea
+                    rows={6}
+                    placeholder={m['settings.decks.input_ph']()}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                  />
+                </TabsContent>
+                <TabsContent value="url" className="pt-3">
+                  <Input
+                    placeholder={m['settings.decks.url_ph']()}
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                  />
+                </TabsContent>
+                <TabsContent value="file" className="space-y-2 pt-3">
+                  <input
+                    type="file"
+                    accept=".txt,.md,text/plain,text/markdown"
+                    onChange={handleFile}
+                    className="text-sm"
+                  />
+                  <p className="text-muted-foreground text-xs">
+                    {reading
+                      ? m['settings.decks.reading_file']()
+                      : input
+                        ? `✓ ${input.length} chars`
+                        : m['settings.decks.file_hint']()}
+                  </p>
+                </TabsContent>
+              </Tabs>
             </div>
             <DialogFooter>
               <Button
-                disabled={!input.trim() || gen.isPending}
+                disabled={
+                  (!input.trim() && !url.trim()) || reading || gen.isPending
+                }
                 onClick={() => gen.mutate()}
               >
                 {gen.isPending

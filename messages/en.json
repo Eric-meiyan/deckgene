@@ -880,5 +880,11 @@
   "settings.brands.accent": "Accent",
   "settings.brands.background": "Background",
   "settings.brands.text": "Text",
-  "settings.brands.saved": "Saved"
+  "settings.brands.saved": "Saved",
+  "settings.decks.tab_text": "Text",
+  "settings.decks.tab_url": "URL",
+  "settings.decks.tab_file": "File",
+  "settings.decks.url_ph": "https://example.com/article",
+  "settings.decks.file_hint": "Upload a .txt or .md file",
+  "settings.decks.reading_file": "Reading file…"
 }

@@ -880,5 +880,11 @@
   "settings.brands.accent": "强调色",
   "settings.brands.background": "背景色",
   "settings.brands.text": "文字色",
-  "settings.brands.saved": "已保存"
+  "settings.brands.saved": "已保存",
+  "settings.decks.tab_text": "文本",
+  "settings.decks.tab_url": "网址",
+  "settings.decks.tab_file": "文件",
+  "settings.decks.url_ph": "https://example.com/文章",
+  "settings.decks.file_hint": "上传 .txt 或 .md 文件",
+  "settings.decks.reading_file": "读取文件中…"
 }
