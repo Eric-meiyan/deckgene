@@ -24,6 +24,7 @@ import {
  */
 
 const MAX_SLIDES = 20;
+const DECK_CREDITS = 100; // 每个 deck 消耗（见 docs/PRD.md §10）
 
 /** 动态构建 plan schema：slide_type 限定为注册表已知 key。 */
 function buildPlanSchema() {
@@ -157,27 +158,48 @@ export async function generateDeck(
     tone = b?.tone ?? undefined;
   }
 
-  // 1. plan
-  const plan = await planDeck(provider, params.input, { title: params.title });
-  const deckTitle = params.title ?? plan.title;
-
-  // 2. fill（并发 fan-out）
-  const slides = await Promise.all(
-    plan.slides.map((s) =>
-      fillSlide(provider, s.slide_type, s.brief, {
-        deckTitle,
-        tone,
-      })
-    )
-  );
-
-  // 3. assemble（落库）
-  return createDeckWithSlides({
+  // 计费：预扣 DECK_CREDITS（见 docs/PRD.md §10）。余额不足直接拒绝；失败退款。
+  const { consume, revoke } = await import('@/modules/credits/service');
+  const charge = await consume({
     userId: params.userId,
-    title: deckTitle,
-    brandId,
-    locale: params.locale,
-    sourceInput: params.input,
-    slides,
+    credits: DECK_CREDITS,
+    scene: 'deck_generate',
+    description: 'Generate deck',
   });
+  if (!charge.success) throw new Error('insufficient_credits');
+
+  try {
+    // 1. plan
+    const plan = await planDeck(provider, params.input, {
+      title: params.title,
+    });
+    const deckTitle = params.title ?? plan.title;
+
+    // 2. fill（并发 fan-out）
+    const slides = await Promise.all(
+      plan.slides.map((s) =>
+        fillSlide(provider, s.slide_type, s.brief, { deckTitle, tone })
+      )
+    );
+
+    // 3. assemble（落库）
+    return await createDeckWithSlides({
+      userId: params.userId,
+      title: deckTitle,
+      brandId,
+      locale: params.locale,
+      sourceInput: params.input,
+      slides,
+    });
+  } catch (e) {
+    // 失败退款
+    if (charge.consumedCredit?.id) {
+      try {
+        await revoke(charge.consumedCredit.id);
+      } catch {
+        // 退款失败不掩盖原始错误
+      }
+    }
+    throw e;
+  }
 }

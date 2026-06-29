@@ -860,5 +860,15 @@
   "settings.mcp.need_key": "Use an API key from the API Keys page as the bearer token.",
   "settings.mcp.tools": "Available tools",
   "settings.mcp.copy": "Copy",
-  "settings.mcp.copied": "Copied"
+  "settings.mcp.copied": "Copied",
+  "settings.home.banner_title": "Build with deckgene",
+  "settings.home.banner_desc": "Turn any text into a brand-locked, shareable deck — via dashboard, REST API or MCP.",
+  "settings.home.generate": "Generate a deck",
+  "settings.home.products": "Products",
+  "settings.home.recent": "Recent decks",
+  "settings.home.view_all": "View all",
+  "settings.home.p_decks_desc": "Create, edit, publish and share decks.",
+  "settings.home.p_brands_desc": "Brand Kernel — extract once, locked everywhere.",
+  "settings.home.p_mcp_desc": "Connect Claude and assistants via MCP.",
+  "settings.home.p_api_desc": "Generate decks programmatically."
 }

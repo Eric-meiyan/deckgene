@@ -224,6 +224,27 @@ export function getAuth(configs?: Record<string, string>) {
     advanced: {
       database: { generateId: () => getUuid() },
     },
+    databaseHooks: {
+      user: {
+        create: {
+          // 注册后自动发放免费积分（Free 档），让用户能立即生成 deck。
+          after: async (newUser: { id: string; email?: string }) => {
+            try {
+              const { grant } = await import('@/modules/credits/service');
+              await grant({
+                userId: newUser.id,
+                userEmail: newUser.email,
+                credits: 200,
+                scene: 'gift',
+                description: 'Welcome credits',
+              });
+            } catch (e) {
+              console.error('[auth] welcome credits failed:', e);
+            }
+          },
+        },
+      },
+    },
     emailAndPassword: {
       enabled: emailAndPasswordEnabled,
       requireEmailVerification: emailVerificationEnabled,

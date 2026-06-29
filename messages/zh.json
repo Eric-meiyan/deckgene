@@ -860,5 +860,15 @@
   "settings.mcp.need_key": "在「API Keys」页生成一个 key 作为 bearer token。",
   "settings.mcp.tools": "可用工具",
   "settings.mcp.copy": "复制",
-  "settings.mcp.copied": "已复制"
+  "settings.mcp.copied": "已复制",
+  "settings.home.banner_title": "用 deckgene 构建",
+  "settings.home.banner_desc": "把任意文本变成品牌统一、可分享的 deck —— 控制台、REST API 或 MCP 皆可。",
+  "settings.home.generate": "生成 deck",
+  "settings.home.products": "功能",
+  "settings.home.recent": "最近的 deck",
+  "settings.home.view_all": "查看全部",
+  "settings.home.p_decks_desc": "创建、编辑、发布与分享 deck。",
+  "settings.home.p_brands_desc": "Brand Kernel —— 提取一次，全局锁定。",
+  "settings.home.p_mcp_desc": "让 Claude 等助手通过 MCP 接入。",
+  "settings.home.p_api_desc": "程序化生成 deck。"
 }
