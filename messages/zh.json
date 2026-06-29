@@ -929,5 +929,6 @@
   "settings.deck_editor.ai_iterating": "改写中…",
   "settings.deck_editor.ai_iterated": "已改写",
   "settings.deck_editor.advanced_json": "高级:原始 JSON",
-  "settings.deck_editor.apply_json": "应用 JSON"
+  "settings.deck_editor.apply_json": "应用 JSON",
+  "settings.nav.docs": "文档"
 }

@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router';
 import {
+  BookOpen,
   Coins,
   CreditCard,
   Home,
@@ -96,6 +97,12 @@ function SettingsLayout() {
   ];
 
   const footerNavItems = [
+    {
+      href: '/docs',
+      label: m['settings.nav.docs'](),
+      icon: BookOpen,
+      newTab: true,
+    },
     {
       href: '/settings/profile',
       label: m['settings.nav.profile'](),

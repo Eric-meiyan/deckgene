@@ -929,5 +929,6 @@
   "settings.deck_editor.ai_iterating": "Rewriting…",
   "settings.deck_editor.ai_iterated": "Slide rewritten",
   "settings.deck_editor.advanced_json": "Advanced: raw JSON",
-  "settings.deck_editor.apply_json": "Apply JSON"
+  "settings.deck_editor.apply_json": "Apply JSON",
+  "settings.nav.docs": "Docs"
 }
