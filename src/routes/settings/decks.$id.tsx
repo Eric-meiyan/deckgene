@@ -355,7 +355,7 @@ function DeckEditorPage() {
         </div>
         <div className="flex items-center gap-2">
           <Select
-            value={deck.brand_id ?? ''}
+            value={currentBrand ? deck.brand_id! : ''}
             onValueChange={(v) => setBrand.mutate(v || null)}
           >
             <SelectTrigger className="h-8 w-40">
