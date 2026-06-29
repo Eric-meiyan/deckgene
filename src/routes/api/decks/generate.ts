@@ -36,6 +36,14 @@ async function POST({ request }: { request: Request }) {
       userId: auth.userId,
       input: input.slice(0, 8000),
       title,
+      slideCount:
+        typeof body?.slide_count === 'number' ? body.slide_count : undefined,
+      audience: typeof body?.audience === 'string' ? body.audience : undefined,
+      depth: ['concise', 'balanced', 'detailed'].includes(body?.depth)
+        ? body.depth
+        : undefined,
+      language: typeof body?.language === 'string' ? body.language : undefined,
+      tone: typeof body?.tone === 'string' ? body.tone : undefined,
     });
     return respData({
       deck_id: deck.id,

@@ -45,26 +45,51 @@ function buildPlanSchema() {
 
 export type DeckPlan = z.infer<ReturnType<typeof buildPlanSchema>>;
 
+export interface GenOptions {
+  slideCount?: number; // 0/undefined = auto
+  audience?: string;
+  depth?: 'concise' | 'balanced' | 'detailed';
+  language?: string; // 'zh' | 'en' | 自由文本
+}
+
+function langName(l?: string): string | undefined {
+  if (!l || l === 'auto') return undefined;
+  if (l === 'zh') return 'Chinese (简体中文)';
+  if (l === 'en') return 'English';
+  return l;
+}
+
 /** 第 1 步：规划——按叙事弧线选模板 + 每页 brief。 */
 export async function planDeck(
   provider: LLMProvider,
   input: string,
-  opts: { title?: string } = {}
+  opts: { title?: string } & GenOptions = {}
 ): Promise<DeckPlan> {
   const catalog = listSlideTemplatesCompact()
     .map((t) => `- ${t.key} [${t.category}]: ${t.whenToUse}`)
     .join('\n');
+
+  const count =
+    opts.slideCount && opts.slideCount > 0
+      ? `Produce EXACTLY ${Math.min(opts.slideCount, MAX_SLIDES)} slides.`
+      : 'Aim for 5–15 slides unless the input demands otherwise.';
+  const lang = langName(opts.language);
 
   const system = [
     'You are a presentation architect for deckgene.',
     'Plan a deck as an ordered list of slides following the narrative arc:',
     'Open → Argue → Show → Close.',
     'Choose each slide_type ONLY from the catalog below, by its whenToUse.',
-    'Do not repeat content across slides. Aim for 5–15 slides unless the input demands otherwise.',
+    'Do not repeat content across slides.',
+    count,
+    opts.audience ? `Target audience: ${opts.audience}.` : '',
+    lang ? `Write the brief (and later content) in ${lang}.` : '',
     '',
     'Slide type catalog:',
     catalog,
-  ].join('\n');
+  ]
+    .filter(Boolean)
+    .join('\n');
 
   const prompt = [
     opts.title ? `Deck title (suggested): ${opts.title}` : '',
@@ -87,7 +112,13 @@ export async function fillSlide(
   provider: LLMProvider,
   slideType: string,
   brief: string,
-  ctx: { deckTitle: string; tone?: string }
+  ctx: {
+    deckTitle: string;
+    tone?: string;
+    audience?: string;
+    depth?: 'concise' | 'balanced' | 'detailed';
+    language?: string;
+  }
 ): Promise<NewSlideInput> {
   const tpl = getSlideTemplate(slideType);
   if (!tpl) {
@@ -98,11 +129,22 @@ export async function fillSlide(
     };
   }
 
+  const depthHint =
+    ctx.depth === 'concise'
+      ? 'Be very concise — minimal words.'
+      : ctx.depth === 'detailed'
+        ? 'Be thorough — richer detail where fields allow.'
+        : '';
+  const lang = langName(ctx.language);
+
   const system = [
     `You are writing the content for one slide of the deck "${ctx.deckTitle}".`,
     `Slide type: ${tpl.key} — ${tpl.whenToUse}`,
     ctx.tone ? `Brand tone: ${ctx.tone}.` : '',
-    'Fill the structured fields concisely. Respect every field length limit.',
+    ctx.audience ? `Audience: ${ctx.audience}.` : '',
+    lang ? `Write all content in ${lang}.` : '',
+    depthHint,
+    'Fill the structured fields. Respect every field length limit.',
   ]
     .filter(Boolean)
     .join('\n');
@@ -137,7 +179,7 @@ export async function generateDeck(
     locale?: string;
     ctx?: ProviderContext;
     tone?: string;
-  },
+  } & GenOptions,
   deps: { provider?: LLMProvider } = {}
 ): Promise<DeckWithSlides> {
   const provider = deps.provider ?? getLLMProvider(params.ctx);
@@ -172,13 +214,23 @@ export async function generateDeck(
     // 1. plan
     const plan = await planDeck(provider, params.input, {
       title: params.title,
+      slideCount: params.slideCount,
+      audience: params.audience,
+      depth: params.depth,
+      language: params.language,
     });
     const deckTitle = params.title ?? plan.title;
 
     // 2. fill（并发 fan-out）
     const slides = await Promise.all(
       plan.slides.map((s) =>
-        fillSlide(provider, s.slide_type, s.brief, { deckTitle, tone })
+        fillSlide(provider, s.slide_type, s.brief, {
+          deckTitle,
+          tone,
+          audience: params.audience,
+          depth: params.depth,
+          language: params.language,
+        })
       )
     );
 
