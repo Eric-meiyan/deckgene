@@ -115,6 +115,100 @@ export async function setActiveBrand(
   });
 }
 
+/**
+ * Brand Kernel：从 URL 提取品牌（palette/typography/tone）并创建 brand。
+ * 启发式：meta theme-color / 高频非灰阶色 → primary；font-family → typography；
+ * 正文片段经 LLM → tone。见 docs/PRD.md §9.5。
+ */
+export async function extractBrandFromUrl(
+  userId: string,
+  url: string
+): Promise<Brand> {
+  // 简单 SSRF 防护
+  let u: URL;
+  try {
+    u = new URL(url);
+  } catch {
+    throw new Error('invalid url');
+  }
+  if (!/^https?:$/.test(u.protocol)) throw new Error('only http(s) allowed');
+  if (/^(localhost|127\.|0\.|10\.|192\.168\.|169\.254\.)/.test(u.hostname)) {
+    throw new Error('blocked host');
+  }
+
+  const res = await fetch(u.toString(), {
+    headers: { 'user-agent': 'deckgene-brand-kernel/1.0' },
+  });
+  if (!res.ok) throw new Error(`fetch failed: ${res.status}`);
+  const html = (await res.text()).slice(0, 500_000);
+
+  // primary：优先 meta theme-color，否则取高频非灰阶色
+  const theme = html.match(
+    /<meta[^>]+name=["']theme-color["'][^>]+content=["'](#[0-9a-fA-F]{3,6})["']/i
+  );
+  let primary = theme?.[1];
+  if (!primary) {
+    const counts = new Map<string, number>();
+    for (const m of html.matchAll(/#([0-9a-fA-F]{6})\b/g)) {
+      const hex = '#' + m[1].toLowerCase();
+      const r = parseInt(m[1].slice(0, 2), 16);
+      const g = parseInt(m[1].slice(2, 4), 16);
+      const b = parseInt(m[1].slice(4, 6), 16);
+      const gray = Math.abs(r - g) < 12 && Math.abs(g - b) < 12;
+      const lum = (r + g + b) / 3;
+      if (gray || lum < 24 || lum > 232) continue; // 跳过灰阶/极端
+      counts.set(hex, (counts.get(hex) ?? 0) + 1);
+    }
+    primary = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  }
+  primary = primary ?? '#25a18e';
+
+  // typography：第一个 font-family
+  const fontMatch = html.match(/font-family:\s*([^;"'}]+)/i);
+  const headingFont = fontMatch
+    ? fontMatch[1].split(',')[0].replace(/["']/g, '').trim()
+    : 'Inter';
+
+  // tone：正文片段 → LLM 一句话
+  let tone: string | undefined;
+  try {
+    const text = html
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 2000);
+    if (text.length > 50) {
+      const { getLLMProvider } = await import('@/modules/ai/providers');
+      tone = (
+        await getLLMProvider().generateText({
+          system:
+            'You analyze brand voice. Reply with a SHORT phrase (<=20 chars) describing the brand tone, no quotes.',
+          prompt: `Brand page text:\n${text}`,
+        })
+      )
+        .trim()
+        .slice(0, 60);
+    }
+  } catch {
+    // tone 提取失败不阻断
+  }
+
+  return createBrand(userId, {
+    name: u.hostname.replace(/^www\./, ''),
+    sourceUrl: u.toString(),
+    palette: {
+      primary,
+      secondary: primary,
+      background: '#ffffff',
+      text: '#1a1a1a',
+    },
+    typography: { heading_font: headingFont, body_font: headingFont },
+    tone,
+  });
+}
+
 /** 序列化为对外 API 形状。 */
 export function toApiBrand(b: Brand): Record<string, unknown> {
   return {

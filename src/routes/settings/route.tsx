@@ -6,6 +6,8 @@ import {
   Key,
   LayoutDashboard,
   LifeBuoy,
+  Palette,
+  Plug,
   Presentation,
   Receipt,
   User,
@@ -33,6 +35,18 @@ function SettingsLayout() {
       href: '/settings/decks',
       label: m['settings.nav.decks'](),
       icon: Presentation,
+      group,
+    },
+    {
+      href: '/settings/brands',
+      label: m['settings.nav.brands'](),
+      icon: Palette,
+      group,
+    },
+    {
+      href: '/settings/mcp',
+      label: m['settings.nav.mcp'](),
+      icon: Plug,
       group,
     },
     {
