@@ -24,8 +24,16 @@ async function GET({
   const deck = await getDeckWithSlides(params.id, auth.userId);
   if (!deck) return respErr('Deck not found');
 
+  // 取关联品牌（用于上色/字体）
+  let brand: { palette?: any; typography?: any } | undefined;
+  if (deck.brandId) {
+    const { getBrand } = await import('@/modules/deck/brand.service');
+    const b = await getBrand(deck.brandId, auth.userId);
+    if (b) brand = { palette: b.palette, typography: b.typography };
+  }
+
   if (format === 'pptx') {
-    const buf = await deckToPptx(deck);
+    const buf = await deckToPptx(deck, brand);
     const safe = deck.slug || 'deck';
     return new Response(buf, {
       status: 200,
