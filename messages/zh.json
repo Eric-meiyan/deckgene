@@ -887,5 +887,6 @@
   "settings.decks.url_ph": "https://example.com/文章",
   "settings.decks.file_hint": "上传 .txt 或 .md 文件",
   "settings.decks.reading_file": "读取文件中…",
-  "settings.deck_editor.export_pptx": "导出 PPTX"
+  "settings.deck_editor.export_pptx": "导出 PPTX",
+  "settings.deck_editor.export_pdf": "导出 PDF"
 }

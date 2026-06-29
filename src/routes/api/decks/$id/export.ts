@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 
+import { envConfigs } from '@/config';
 import { getDeckWithSlides } from '@/modules/deck/deck.service';
 import { deckToPptx } from '@/modules/deck/export.service';
 import { respErr } from '@/lib/resp';
@@ -37,7 +38,26 @@ async function GET({
   }
 
   if (format === 'pdf') {
-    return respErr('PDF export not configured yet (needs Browser Rendering)');
+    if (deck.status !== 'published') {
+      return respErr('Publish the deck first to export PDF');
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const env = (globalThis as any).__CF_ENV__;
+    if (!env?.BROWSER) {
+      return respErr(
+        'PDF export not available (Browser Rendering not configured)'
+      );
+    }
+    const { deckToPdf } = await import('@/modules/deck/export-pdf.service');
+    const url = `${envConfigs.app_url}/d/${deck.slug}`;
+    const pdf = await deckToPdf(env.BROWSER, url);
+    return new Response(pdf as unknown as BodyInit, {
+      status: 200,
+      headers: {
+        'content-type': 'application/pdf',
+        'content-disposition': `attachment; filename="${deck.slug}.pdf"`,
+      },
+    });
   }
 
   return respErr(`unsupported format: ${format}`);

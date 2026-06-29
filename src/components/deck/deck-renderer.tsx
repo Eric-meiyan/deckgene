@@ -47,7 +47,7 @@ export function DeckRenderer({
     >
       <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4">
         {slides.map((s) => (
-          <section key={s.id} className="fade-up">
+          <section key={s.id} className="fade-up break-after-page">
             {renderSlide(s.slide_type, s.content)}
           </section>
         ))}

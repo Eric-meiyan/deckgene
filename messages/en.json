@@ -887,5 +887,6 @@
   "settings.decks.url_ph": "https://example.com/article",
   "settings.decks.file_hint": "Upload a .txt or .md file",
   "settings.decks.reading_file": "Reading file…",
-  "settings.deck_editor.export_pptx": "Export PPTX"
+  "settings.deck_editor.export_pptx": "Export PPTX",
+  "settings.deck_editor.export_pdf": "Export PDF"
 }
