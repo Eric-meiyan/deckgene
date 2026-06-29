@@ -14,6 +14,13 @@ const surface = z.enum(['light', 'subtle', 'dark', 'accent']).optional();
 const short = (max: number) => z.string().max(max);
 const long = (max: number) => z.string().max(max);
 
+// 可选 URL：把空串/占位当作未填（AI 生成/改写常返回空 image 串，避免 url 校验炸）
+const urlOpt = () =>
+  z.preprocess(
+    (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
+    z.string().url().optional().catch(undefined)
+  );
+
 // ─── Open ─────────────────────────────────────────────────────────────────────
 
 const title: SlideTemplate = {
@@ -27,7 +34,7 @@ const title: SlideTemplate = {
     layoutVariant: z
       .enum(['default', 'centered', 'image-right', 'image-fullbleed'])
       .optional(),
-    image: z.string().url().optional(),
+    image: urlOpt(),
     eyebrow: short(40).optional(),
     title: short(120),
     subtitle: long(180).optional(),
@@ -309,7 +316,7 @@ const cta: SlideTemplate = {
     heading: long(120),
     body: long(180).optional(),
     buttonLabel: short(40).optional(),
-    buttonHref: z.string().url().optional(),
+    buttonHref: urlOpt(),
     hideButton: z.boolean().optional(),
   }),
 };
