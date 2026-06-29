@@ -894,5 +894,8 @@
   "settings.templates.subtitle": "从现成的 deck 结构开始。",
   "settings.templates.use": "使用模板",
   "settings.templates.creating": "创建中…",
-  "settings.templates.slides": "页"
+  "settings.templates.slides": "页",
+  "settings.nav.draft": "AI 起稿",
+  "settings.draft.title": "AI 起稿",
+  "settings.draft.subtitle": "把一段提示、一个网址或一个文件，变成完整的 deck。"
 }

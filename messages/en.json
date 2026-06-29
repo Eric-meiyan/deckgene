@@ -894,5 +894,8 @@
   "settings.templates.subtitle": "Start from a ready-made deck structure.",
   "settings.templates.use": "Use template",
   "settings.templates.creating": "Creating…",
-  "settings.templates.slides": "slides"
+  "settings.templates.slides": "slides",
+  "settings.nav.draft": "AI Draft",
+  "settings.draft.title": "AI Draft",
+  "settings.draft.subtitle": "Turn a prompt, a URL, or a file into a full deck."
 }

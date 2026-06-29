@@ -11,6 +11,7 @@ import {
   Plug,
   Presentation,
   Receipt,
+  Sparkles,
   User,
 } from 'lucide-react';
 
@@ -30,6 +31,12 @@ function SettingsLayout() {
       href: '/settings',
       label: m['settings.nav.overview'](),
       icon: LayoutDashboard,
+      group,
+    },
+    {
+      href: '/settings/draft',
+      label: m['settings.nav.draft'](),
+      icon: Sparkles,
       group,
     },
     {
