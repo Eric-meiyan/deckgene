@@ -23,6 +23,7 @@ import { Link } from '@/core/i18n/navigation';
 import { apiDelete, apiGet, apiPost } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
+import { SlideForm } from '@/components/deck/slide-form';
 import { renderSlide } from '@/components/deck/slides';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -67,21 +68,24 @@ function SlideEditor({ deckId, slide }: { deckId: string; slide: SlideDTO }) {
     transition,
     isDragging,
   } = useSortable({ id: slide.id });
-  const [json, setJson] = useState(JSON.stringify(slide.content, null, 2));
+  const [content, setContent] = useState<Record<string, unknown>>(
+    slide.content
+  );
   const [instruction, setInstruction] = useState('');
-
-  // 实时预览：解析当前 JSON，合法则渲染，否则提示
-  let parsed: Record<string, unknown> | null = null;
-  let parseError = false;
+  const [showJson, setShowJson] = useState(false);
+  const [jsonDraft, setJsonDraft] = useState(() =>
+    JSON.stringify(slide.content, null, 2)
+  );
+  let jsonError = false;
   try {
-    parsed = JSON.parse(json);
+    JSON.parse(jsonDraft);
   } catch {
-    parseError = true;
+    jsonError = true;
   }
 
   const save = useMutation({
     mutationFn: () =>
-      apiPost(`/api/decks/${deckId}/slides/${slide.id}`, { content: parsed }),
+      apiPost(`/api/decks/${deckId}/slides/${slide.id}`, { content }),
     onSuccess: () => {
       toast.success(m['settings.deck_editor.saved']());
       qc.invalidateQueries({ queryKey: ['deck', deckId] });
@@ -103,7 +107,8 @@ function SlideEditor({ deckId, slide }: { deckId: string; slide: SlideDTO }) {
         { instruction }
       ),
     onSuccess: (s) => {
-      setJson(JSON.stringify(s.content, null, 2));
+      setContent(s.content);
+      setJsonDraft(JSON.stringify(s.content, null, 2));
       setInstruction('');
       toast.success(m['settings.deck_editor.ai_iterated']());
       qc.invalidateQueries({ queryKey: ['deck', deckId] });
@@ -138,15 +143,9 @@ function SlideEditor({ deckId, slide }: { deckId: string; slide: SlideDTO }) {
           </button>
         </div>
 
-        {/* 实时预览 */}
+        {/* 实时预览（由表单内容驱动） */}
         <div className="overflow-hidden rounded-xl border">
-          {parseError || !parsed ? (
-            <div className="text-muted-foreground p-4 text-xs">
-              {m['settings.deck_editor.invalid_json']()}
-            </div>
-          ) : (
-            renderSlide(slide.slide_type, parsed)
-          )}
+          {renderSlide(slide.slide_type, content)}
         </div>
 
         {/* 单页 AI 改写 */}
@@ -174,17 +173,49 @@ function SlideEditor({ deckId, slide }: { deckId: string; slide: SlideDTO }) {
           </Button>
         </div>
 
-        {/* JSON 编辑 */}
-        <Textarea
-          rows={8}
-          className="font-mono text-xs"
-          value={json}
-          onChange={(e) => setJson(e.target.value)}
+        {/* 表单式编辑 */}
+        <SlideForm
+          slideType={slide.slide_type}
+          content={content}
+          onChange={setContent}
         />
+
+        {/* 高级：原始 JSON */}
+        <div>
+          <button
+            className="text-muted-foreground hover:text-foreground text-xs"
+            onClick={() => {
+              if (!showJson) setJsonDraft(JSON.stringify(content, null, 2));
+              setShowJson((v) => !v);
+            }}
+          >
+            {showJson ? '▾ ' : '▸ '}
+            {m['settings.deck_editor.advanced_json']()}
+          </button>
+          {showJson && (
+            <div className="mt-2 space-y-2">
+              <Textarea
+                rows={8}
+                className="font-mono text-xs"
+                value={jsonDraft}
+                onChange={(e) => setJsonDraft(e.target.value)}
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={jsonError}
+                onClick={() => setContent(JSON.parse(jsonDraft))}
+              >
+                {m['settings.deck_editor.apply_json']()}
+              </Button>
+            </div>
+          )}
+        </div>
+
         <div className="flex justify-end">
           <Button
             size="sm"
-            disabled={parseError || save.isPending}
+            disabled={save.isPending}
             onClick={() => save.mutate()}
           >
             {m['settings.deck_editor.save']()}

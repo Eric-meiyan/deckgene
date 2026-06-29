@@ -927,5 +927,7 @@
   "settings.deck_editor.ai_iterate_ph": "Tell AI how to rewrite this slide… (10 credits)",
   "settings.deck_editor.ai_iterate_btn": "AI rewrite",
   "settings.deck_editor.ai_iterating": "Rewriting…",
-  "settings.deck_editor.ai_iterated": "Slide rewritten"
+  "settings.deck_editor.ai_iterated": "Slide rewritten",
+  "settings.deck_editor.advanced_json": "Advanced: raw JSON",
+  "settings.deck_editor.apply_json": "Apply JSON"
 }

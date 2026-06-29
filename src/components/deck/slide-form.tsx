@@ -1,0 +1,412 @@
+import { Plus, Trash2 } from 'lucide-react';
+
+import { getSlideTemplate } from '@/modules/deck/templates/registry';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+
+/**
+ * 从 slide_type 的 zod schema 自动生成的表单（替代手写 JSON）。
+ * 受控：content 为唯一数据源，编辑回调 onChange(新 content)。
+ */
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Z = any;
+interface Field {
+  kind:
+    | 'string'
+    | 'number'
+    | 'enum'
+    | 'array-object'
+    | 'array-string'
+    | 'object'
+    | 'unsupported';
+  name: string;
+  label: string;
+  optional: boolean;
+  long?: boolean;
+  values?: string[];
+  fields?: Field[]; // for object / array-object
+}
+
+const LABELS: Record<string, string> = {
+  variant: '表面色调',
+  layoutVariant: '版式',
+  title: '标题',
+  subtitle: '副标题',
+  heading: '标题',
+  eyebrow: '眉标',
+  items: '列表项',
+  text: '文本',
+  detail: '说明',
+  label: '标签',
+  value: '数值',
+  stats: '数据',
+  steps: '步骤',
+  body: '正文',
+  left: '左侧',
+  right: '右侧',
+  footnote: '脚注',
+  caption: '图注',
+  source: '来源',
+  client: '客户',
+  date: '日期',
+  number: '编号',
+  attribution: '署名',
+  kpis: 'KPI',
+  delta: '变化',
+  trend: '趋势',
+  series: '数据序列',
+  note: '备注',
+  chartType: '图表类型',
+  strengths: '优势',
+  weaknesses: '劣势',
+  opportunities: '机会',
+  threats: '威胁',
+  problem: '问题',
+  solution: '方案',
+  result: '结果',
+  name: '名称',
+  email: '邮箱',
+  links: '链接',
+  url: '网址',
+  buttonLabel: '按钮文字',
+  buttonHref: '按钮链接',
+  image: '配图链接',
+  imageUrl: '图片链接',
+  events: '事件',
+};
+const ENUM_LABELS: Record<string, string> = {
+  light: '浅色',
+  subtle: '柔和',
+  dark: '深色',
+  accent: '品牌色',
+  up: '上升',
+  down: '下降',
+  flat: '持平',
+};
+
+function humanize(k: string) {
+  return (
+    LABELS[k] ??
+    k.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase())
+  );
+}
+
+function unwrap(v: Z): { node: Z; optional: boolean } {
+  let optional = false;
+  let n = v;
+  while (n?._def) {
+    const t = n._def.type;
+    if (t === 'optional' || t === 'nullable') {
+      optional = true;
+      n = n._def.innerType;
+    } else if (t === 'default' || t === 'catch') {
+      n = n._def.innerType;
+    } else if (t === 'pipe') {
+      n = n._def.out ?? n._def.in;
+    } else break;
+  }
+  return { node: n, optional };
+}
+
+function strMax(node: Z): number {
+  for (const c of node._def.checks ?? []) {
+    const d = c?._zod?.def ?? c?.def ?? c;
+    if (d?.check === 'max_length') return d?.maximum ?? d?.value ?? 0;
+  }
+  return 0;
+}
+
+function describe(v: Z, name: string): Field | null {
+  const { node, optional } = unwrap(v);
+  const t = node?._def?.type;
+  const label = humanize(name);
+  if (t === 'string')
+    return { kind: 'string', name, label, optional, long: strMax(node) >= 160 };
+  if (t === 'number') return { kind: 'number', name, label, optional };
+  if (t === 'enum') {
+    const values = Object.values(
+      node._def.entries ?? node._def.values ?? {}
+    ) as string[];
+    return { kind: 'enum', name, label, optional, values };
+  }
+  if (t === 'array') {
+    const { node: el } = unwrap(node._def.element);
+    const et = el?._def?.type;
+    if (et === 'object')
+      return {
+        kind: 'array-object',
+        name,
+        label,
+        optional,
+        fields: subFields(el),
+      };
+    if (et === 'string') return { kind: 'array-string', name, label, optional };
+    return { kind: 'unsupported', name, label, optional }; // 如二维数组(dataTable.rows)
+  }
+  if (t === 'object')
+    return { kind: 'object', name, label, optional, fields: subFields(node) };
+  return null;
+}
+
+function subFields(objNode: Z): Field[] {
+  const shape = objNode._def.shape;
+  const s = typeof shape === 'function' ? shape() : shape;
+  return Object.entries(s)
+    .map(([k, v]) => describe(v, k))
+    .filter(Boolean) as Field[];
+}
+
+export function describeSlideSchema(slideType: string): Field[] {
+  const tpl = getSlideTemplate(slideType);
+  if (!tpl) return [];
+  const shape = (tpl.schema as Z).shape;
+  return Object.entries(shape)
+    .map(([k, v]) => describe(v, k))
+    .filter(Boolean) as Field[];
+}
+
+// ─── 渲染 ────────────────────────────────────────────────────────────────────
+
+type Content = Record<string, unknown>;
+
+function Scalar({
+  field,
+  value,
+  onChange,
+}: {
+  field: Field;
+  value: unknown;
+  onChange: (v: unknown) => void;
+}) {
+  if (field.kind === 'enum') {
+    return (
+      <Select
+        value={(value as string) ?? ''}
+        onValueChange={(v) => onChange(v || undefined)}
+      >
+        <SelectTrigger className="h-8">
+          <SelectValue placeholder={field.optional ? '默认' : '选择'} />
+        </SelectTrigger>
+        <SelectContent>
+          {field.optional && <SelectItem value="">默认</SelectItem>}
+          {field.values!.map((v) => (
+            <SelectItem key={v} value={v}>
+              {ENUM_LABELS[v] ?? v}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  }
+  if (field.kind === 'number') {
+    return (
+      <Input
+        type="number"
+        className="h-8"
+        value={value === undefined || value === null ? '' : String(value)}
+        onChange={(e) =>
+          onChange(e.target.value === '' ? undefined : Number(e.target.value))
+        }
+      />
+    );
+  }
+  if (field.long) {
+    return (
+      <Textarea
+        rows={2}
+        value={(value as string) ?? ''}
+        onChange={(e) => onChange(e.target.value || undefined)}
+      />
+    );
+  }
+  return (
+    <Input
+      className="h-8"
+      value={(value as string) ?? ''}
+      onChange={(e) => onChange(e.target.value || undefined)}
+    />
+  );
+}
+
+function FieldRow({
+  field,
+  value,
+  onChange,
+}: {
+  field: Field;
+  value: unknown;
+  onChange: (v: unknown) => void;
+}) {
+  // 数组（对象行）
+  if (field.kind === 'array-object') {
+    const rows = (Array.isArray(value) ? value : []) as Content[];
+    const setRow = (i: number, row: Content) =>
+      onChange(rows.map((r, idx) => (idx === i ? row : r)));
+    return (
+      <div className="space-y-2">
+        <div className="text-muted-foreground text-xs font-medium">
+          {field.label}
+        </div>
+        {rows.map((row, i) => (
+          <div key={i} className="bg-muted/40 space-y-1.5 rounded-md p-2">
+            <div className="flex justify-end">
+              <button
+                className="text-muted-foreground hover:text-destructive"
+                onClick={() => onChange(rows.filter((_, idx) => idx !== i))}
+                aria-label="remove"
+              >
+                <Trash2 className="size-3.5" />
+              </button>
+            </div>
+            {field.fields!.map((sf) => (
+              <div
+                key={sf.name}
+                className="grid grid-cols-[5rem_1fr] items-center gap-2"
+              >
+                <span className="text-muted-foreground text-xs">
+                  {sf.label}
+                </span>
+                <Scalar
+                  field={sf}
+                  value={row?.[sf.name]}
+                  onChange={(v) => setRow(i, { ...row, [sf.name]: v })}
+                />
+              </div>
+            ))}
+          </div>
+        ))}
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 gap-1"
+          onClick={() => onChange([...rows, {}])}
+        >
+          <Plus className="size-3.5" /> 添加
+        </Button>
+      </div>
+    );
+  }
+  // 数组（字符串）
+  if (field.kind === 'array-string') {
+    const rows = (Array.isArray(value) ? value : []) as string[];
+    return (
+      <div className="space-y-2">
+        <div className="text-muted-foreground text-xs font-medium">
+          {field.label}
+        </div>
+        {rows.map((row, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <Input
+              className="h-8"
+              value={row ?? ''}
+              onChange={(e) =>
+                onChange(rows.map((r, idx) => (idx === i ? e.target.value : r)))
+              }
+            />
+            <button
+              className="text-muted-foreground hover:text-destructive shrink-0"
+              onClick={() => onChange(rows.filter((_, idx) => idx !== i))}
+              aria-label="remove"
+            >
+              <Trash2 className="size-3.5" />
+            </button>
+          </div>
+        ))}
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 gap-1"
+          onClick={() => onChange([...rows, ''])}
+        >
+          <Plus className="size-3.5" /> 添加
+        </Button>
+      </div>
+    );
+  }
+  // 嵌套对象（如 compare 的 left/right）
+  if (field.kind === 'object') {
+    const obj = (value ?? {}) as Content;
+    return (
+      <div className="space-y-1.5">
+        <div className="text-muted-foreground text-xs font-medium">
+          {field.label}
+        </div>
+        <div className="bg-muted/40 space-y-1.5 rounded-md p-2">
+          {field.fields!.map((sf) => (
+            <div
+              key={sf.name}
+              className="grid grid-cols-[5rem_1fr] items-center gap-2"
+            >
+              <span className="text-muted-foreground text-xs">{sf.label}</span>
+              <Scalar
+                field={sf}
+                value={obj?.[sf.name]}
+                onChange={(v) => onChange({ ...obj, [sf.name]: v })}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  // 不支持的复杂结构 → 引导用高级 JSON
+  if (field.kind === 'unsupported') {
+    return (
+      <div className="text-muted-foreground text-xs">
+        {field.label}：结构较复杂，请用下方「高级:原始 JSON」编辑。
+      </div>
+    );
+  }
+  // 标量
+  return (
+    <div className="grid grid-cols-[6rem_1fr] items-center gap-2">
+      <span className="text-muted-foreground text-xs">{field.label}</span>
+      <Scalar field={field} value={value} onChange={onChange} />
+    </div>
+  );
+}
+
+export function SlideForm({
+  slideType,
+  content,
+  onChange,
+}: {
+  slideType: string;
+  content: Content;
+  onChange: (next: Content) => void;
+}) {
+  const fields = describeSlideSchema(slideType);
+  if (!fields.length)
+    return (
+      <div className="text-muted-foreground text-xs">
+        未知页型，无法生成表单。
+      </div>
+    );
+  const setField = (name: string, v: unknown) => {
+    const next = { ...content };
+    if (v === undefined) delete next[name];
+    else next[name] = v;
+    onChange(next);
+  };
+  return (
+    <div className="space-y-3">
+      {fields.map((f) => (
+        <FieldRow
+          key={f.name}
+          field={f}
+          value={content[f.name]}
+          onChange={(v) => setField(f.name, v)}
+        />
+      ))}
+    </div>
+  );
+}
