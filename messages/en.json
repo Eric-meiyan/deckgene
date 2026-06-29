@@ -888,5 +888,11 @@
   "settings.decks.file_hint": "Upload a .txt or .md file",
   "settings.decks.reading_file": "Reading file…",
   "settings.deck_editor.export_pptx": "Export PPTX",
-  "settings.deck_editor.export_pdf": "Export PDF"
+  "settings.deck_editor.export_pdf": "Export PDF",
+  "settings.nav.templates": "Templates",
+  "settings.templates.title": "Templates",
+  "settings.templates.subtitle": "Start from a ready-made deck structure.",
+  "settings.templates.use": "Use template",
+  "settings.templates.creating": "Creating…",
+  "settings.templates.slides": "slides"
 }

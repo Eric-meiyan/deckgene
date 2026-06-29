@@ -120,6 +120,27 @@ export async function getPublishedDeckBySlug(
   return { ...deckRow, slides };
 }
 
+/** 从 deck 级模板创建一个 deck（套用激活品牌；不扣积分）。 */
+export async function createDeckFromTemplate(
+  userId: string,
+  templateId: string
+): Promise<DeckWithSlides | null> {
+  const { getDeckTemplate } = await import('./templates/deck-templates');
+  const tpl = getDeckTemplate(templateId);
+  if (!tpl) return null;
+  const { getActiveBrand } = await import('./brand.service');
+  const active = await getActiveBrand(userId);
+  return createDeckWithSlides({
+    userId,
+    title: tpl.name,
+    brandId: active?.id ?? null,
+    slides: tpl.slides.map((s) => ({
+      slideType: s.slideType,
+      content: s.content,
+    })),
+  });
+}
+
 /** 列出用户的 decks（不含 slides）。 */
 export async function listDecks(userId: string): Promise<Deck[]> {
   return db()

@@ -5,6 +5,7 @@ import {
   Home,
   Key,
   LayoutDashboard,
+  LayoutTemplate,
   LifeBuoy,
   Palette,
   Plug,
@@ -35,6 +36,12 @@ function SettingsLayout() {
       href: '/settings/decks',
       label: m['settings.nav.decks'](),
       icon: Presentation,
+      group,
+    },
+    {
+      href: '/settings/templates',
+      label: m['settings.nav.templates'](),
+      icon: LayoutTemplate,
       group,
     },
     {
