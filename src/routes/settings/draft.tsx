@@ -203,7 +203,12 @@ function DraftPage() {
               </div>
               <Select value={tone} onValueChange={(v) => setTone(v ?? '')}>
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue>
+                    {(val: unknown) => {
+                      const f = TONES.find(([v]) => v === val);
+                      return f ? m[f[1]]() : m['settings.draft.auto']();
+                    }}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {TONES.map(([v, k]) => (
@@ -224,7 +229,12 @@ function DraftPage() {
                 onValueChange={(v) => setAudience(v ?? '')}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue>
+                    {(val: unknown) => {
+                      const f = AUDIENCES.find(([v]) => v === val);
+                      return f ? m[f[1]]() : m['settings.draft.auto']();
+                    }}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {AUDIENCES.map(([v, k]) => (

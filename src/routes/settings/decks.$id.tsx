@@ -359,7 +359,12 @@ function DeckEditorPage() {
             onValueChange={(v) => setBrand.mutate(v || null)}
           >
             <SelectTrigger className="h-8 w-40">
-              <SelectValue placeholder={m['settings.deck_editor.brand']()} />
+              <SelectValue placeholder={m['settings.deck_editor.brand']()}>
+                {(val: unknown) =>
+                  brandsQ.data?.find((b) => b.id === val)?.name ??
+                  m['settings.deck_editor.brand_none']()
+                }
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="">
@@ -446,7 +451,12 @@ function DeckEditorPage() {
       <div className="flex items-center gap-2">
         <Select value={addType} onValueChange={(v) => setAddType(v ?? '')}>
           <SelectTrigger className="w-64">
-            <SelectValue placeholder="slide_type" />
+            <SelectValue placeholder="slide_type">
+              {(val: unknown) => {
+                const t = tplQ.data?.find((x) => x.key === val);
+                return t ? `${t.name} (${t.category})` : 'slide_type';
+              }}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {tplQ.data?.map((t) => (

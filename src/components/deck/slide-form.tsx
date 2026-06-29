@@ -206,7 +206,15 @@ function Scalar({
             placeholder={
               field.optional ? tt('默认', 'Default') : tt('选择', 'Select')
             }
-          />
+          >
+            {(v: unknown) =>
+              v
+                ? enumLabel(String(v))
+                : field.optional
+                  ? tt('默认', 'Default')
+                  : tt('选择', 'Select')
+            }
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {field.optional && (
