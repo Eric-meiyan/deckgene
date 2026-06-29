@@ -923,5 +923,9 @@
   "settings.present.no_notes": "No notes for this slide.",
   "settings.present.next": "Next slide",
   "settings.present.hints": "→ next · ← prev · G overview · F fullscreen · Esc exit",
-  "settings.deck_editor.present": "Present"
+  "settings.deck_editor.present": "Present",
+  "settings.deck_editor.ai_iterate_ph": "Tell AI how to rewrite this slide… (10 credits)",
+  "settings.deck_editor.ai_iterate_btn": "AI rewrite",
+  "settings.deck_editor.ai_iterating": "Rewriting…",
+  "settings.deck_editor.ai_iterated": "Slide rewritten"
 }

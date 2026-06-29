@@ -25,6 +25,7 @@ import {
 
 const MAX_SLIDES = 20;
 const DECK_CREDITS = 100; // 每个 deck 消耗（见 docs/PRD.md §10）
+const SLIDE_EDIT_CREDITS = 10; // 单页 AI 改写消耗（见 docs/PRD.md §9.4）
 
 /** 动态构建 plan schema：slide_type 限定为注册表已知 key。 */
 function buildPlanSchema() {
@@ -167,6 +168,70 @@ export async function fillSlide(
     slideType: 'statement',
     content: { statement: brief.slice(0, 220) },
   };
+}
+
+/**
+ * 单页 AI 改写（见 docs/PRD.md §9.4）：按用户指令改写当前页 content，保持 slide_type。
+ * 扣 SLIDE_EDIT_CREDITS，失败退款。返回新 content（已按 schema 校验，因走 structured 输出）。
+ */
+export async function editSlide(
+  params: {
+    userId: string;
+    slideType: string;
+    currentContent: Record<string, unknown>;
+    instruction: string;
+    deckTitle?: string;
+    tone?: string;
+    language?: string;
+    ctx?: ProviderContext;
+  },
+  deps: { provider?: LLMProvider } = {}
+): Promise<Record<string, unknown>> {
+  const tpl = getSlideTemplate(params.slideType);
+  if (!tpl) throw new Error('unknown_slide_type');
+  const provider = deps.provider ?? getLLMProvider(params.ctx);
+  const lang = langName(params.language);
+
+  const system = [
+    `You are editing one slide ("${tpl.key}") of the deck "${params.deckTitle ?? ''}".`,
+    `Slide purpose: ${tpl.whenToUse}`,
+    params.tone ? `Brand tone: ${params.tone}.` : '',
+    lang ? `Write all content in ${lang}.` : '',
+    'Apply the user instruction to the CURRENT content. Keep the same slide type.',
+    'Return the FULL updated structured fields. Respect every field length limit.',
+  ]
+    .filter(Boolean)
+    .join('\n');
+  const prompt = [
+    `Current content (JSON):\n${JSON.stringify(params.currentContent)}`,
+    `Instruction: ${params.instruction}`,
+  ].join('\n\n');
+
+  const { consume, revoke } = await import('@/modules/credits/service');
+  const charge = await consume({
+    userId: params.userId,
+    credits: SLIDE_EDIT_CREDITS,
+    scene: 'slide_edit',
+    description: 'AI edit slide',
+  });
+  if (!charge.success) throw new Error('insufficient_credits');
+  try {
+    return (await provider.generateStructured({
+      system,
+      prompt,
+      schema: tpl.schema,
+      schemaName: tpl.key,
+    })) as Record<string, unknown>;
+  } catch (e) {
+    if (charge.consumedCredit?.id) {
+      try {
+        await revoke(charge.consumedCredit.id);
+      } catch {
+        // 退款失败不掩盖原始错误
+      }
+    }
+    throw e;
+  }
 }
 
 /** 整体编排：plan → 并发 fill → assemble（落库）。 */

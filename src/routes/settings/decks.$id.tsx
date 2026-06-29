@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Play, Plus, Trash2 } from 'lucide-react';
+import { GripVertical, Play, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Link } from '@/core/i18n/navigation';
@@ -27,6 +27,7 @@ import { renderSlide } from '@/components/deck/slides';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -67,6 +68,7 @@ function SlideEditor({ deckId, slide }: { deckId: string; slide: SlideDTO }) {
     isDragging,
   } = useSortable({ id: slide.id });
   const [json, setJson] = useState(JSON.stringify(slide.content, null, 2));
+  const [instruction, setInstruction] = useState('');
 
   // 实时预览：解析当前 JSON，合法则渲染，否则提示
   let parsed: Record<string, unknown> | null = null;
@@ -90,6 +92,20 @@ function SlideEditor({ deckId, slide }: { deckId: string; slide: SlideDTO }) {
     mutationFn: () => apiDelete(`/api/decks/${deckId}/slides/${slide.id}`),
     onSuccess: () => {
       toast.success(m['settings.deck_editor.deleted']());
+      qc.invalidateQueries({ queryKey: ['deck', deckId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const iterate = useMutation({
+    mutationFn: () =>
+      apiPost<{ content: Record<string, unknown> }>(
+        `/api/decks/${deckId}/slides/${slide.id}/iterate`,
+        { instruction }
+      ),
+    onSuccess: (s) => {
+      setJson(JSON.stringify(s.content, null, 2));
+      setInstruction('');
+      toast.success(m['settings.deck_editor.ai_iterated']());
       qc.invalidateQueries({ queryKey: ['deck', deckId] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -131,6 +147,31 @@ function SlideEditor({ deckId, slide }: { deckId: string; slide: SlideDTO }) {
           ) : (
             renderSlide(slide.slide_type, parsed)
           )}
+        </div>
+
+        {/* 单页 AI 改写 */}
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder={m['settings.deck_editor.ai_iterate_ph']()}
+            value={instruction}
+            onChange={(e) => setInstruction(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && instruction.trim() && !iterate.isPending)
+                iterate.mutate();
+            }}
+          />
+          <Button
+            size="sm"
+            variant="secondary"
+            className="shrink-0 gap-1"
+            disabled={!instruction.trim() || iterate.isPending}
+            onClick={() => iterate.mutate()}
+          >
+            <Sparkles className="size-4" />
+            {iterate.isPending
+              ? m['settings.deck_editor.ai_iterating']()
+              : m['settings.deck_editor.ai_iterate_btn']()}
+          </Button>
         </div>
 
         {/* JSON 编辑 */}
