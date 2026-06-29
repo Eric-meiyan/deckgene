@@ -1,6 +1,7 @@
 import { Plus, Trash2 } from 'lucide-react';
 
 import { getSlideTemplate } from '@/modules/deck/templates/registry';
+import { getLocale } from '@/paraglide/runtime.js';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -36,7 +37,10 @@ interface Field {
   fields?: Field[]; // for object / array-object
 }
 
-const LABELS: Record<string, string> = {
+const isZh = () => getLocale() === 'zh';
+const tt = (zh: string, en: string) => (isZh() ? zh : en);
+
+const LABELS_ZH: Record<string, string> = {
   variant: '表面色调',
   layoutVariant: '版式',
   title: '标题',
@@ -83,7 +87,7 @@ const LABELS: Record<string, string> = {
   imageUrl: '图片链接',
   events: '事件',
 };
-const ENUM_LABELS: Record<string, string> = {
+const ENUM_ZH: Record<string, string> = {
   light: '浅色',
   subtle: '柔和',
   dark: '深色',
@@ -93,11 +97,15 @@ const ENUM_LABELS: Record<string, string> = {
   flat: '持平',
 };
 
+// 英文：把 key 拆词首字母大写（buttonHref → Button Href）
 function humanize(k: string) {
-  return (
-    LABELS[k] ??
-    k.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase())
-  );
+  return k.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase());
+}
+function labelFor(k: string) {
+  return isZh() ? (LABELS_ZH[k] ?? humanize(k)) : humanize(k);
+}
+function enumLabel(v: string) {
+  return isZh() ? (ENUM_ZH[v] ?? v) : humanize(v);
 }
 
 function unwrap(v: Z): { node: Z; optional: boolean } {
@@ -128,7 +136,7 @@ function strMax(node: Z): number {
 function describe(v: Z, name: string): Field | null {
   const { node, optional } = unwrap(v);
   const t = node?._def?.type;
-  const label = humanize(name);
+  const label = labelFor(name);
   if (t === 'string')
     return { kind: 'string', name, label, optional, long: strMax(node) >= 160 };
   if (t === 'number') return { kind: 'number', name, label, optional };
@@ -194,13 +202,19 @@ function Scalar({
         onValueChange={(v) => onChange(v || undefined)}
       >
         <SelectTrigger className="h-8">
-          <SelectValue placeholder={field.optional ? '默认' : '选择'} />
+          <SelectValue
+            placeholder={
+              field.optional ? tt('默认', 'Default') : tt('选择', 'Select')
+            }
+          />
         </SelectTrigger>
         <SelectContent>
-          {field.optional && <SelectItem value="">默认</SelectItem>}
+          {field.optional && (
+            <SelectItem value="">{tt('默认', 'Default')}</SelectItem>
+          )}
           {field.values!.map((v) => (
             <SelectItem key={v} value={v}>
-              {ENUM_LABELS[v] ?? v}
+              {enumLabel(v)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -290,7 +304,7 @@ function FieldRow({
           className="h-7 gap-1"
           onClick={() => onChange([...rows, {}])}
         >
-          <Plus className="size-3.5" /> 添加
+          <Plus className="size-3.5" /> {tt('添加', 'Add')}
         </Button>
       </div>
     );
@@ -327,7 +341,7 @@ function FieldRow({
           className="h-7 gap-1"
           onClick={() => onChange([...rows, ''])}
         >
-          <Plus className="size-3.5" /> 添加
+          <Plus className="size-3.5" /> {tt('添加', 'Add')}
         </Button>
       </div>
     );
@@ -362,7 +376,11 @@ function FieldRow({
   if (field.kind === 'unsupported') {
     return (
       <div className="text-muted-foreground text-xs">
-        {field.label}：结构较复杂，请用下方「高级:原始 JSON」编辑。
+        {field.label}
+        {tt(
+          '：结构较复杂，请用下方「高级:原始 JSON」编辑。',
+          ': complex structure — edit via "Advanced: raw JSON" below.'
+        )}
       </div>
     );
   }
@@ -388,7 +406,10 @@ export function SlideForm({
   if (!fields.length)
     return (
       <div className="text-muted-foreground text-xs">
-        未知页型，无法生成表单。
+        {tt(
+          '未知页型，无法生成表单。',
+          'Unknown slide type — no form available.'
+        )}
       </div>
     );
   const setField = (name: string, v: unknown) => {
