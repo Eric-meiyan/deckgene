@@ -195,8 +195,20 @@ export async function extractBrandFromUrl(
     // tone 提取失败不阻断
   }
 
+  // 名称：og:site_name / <title> 友好名，回退 hostname
+  const og = html.match(
+    /<meta[^>]+property=["']og:site_name["'][^>]+content=["']([^"']+)["']/i
+  );
+  const titleTag = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+  const rawName = (og?.[1] || titleTag?.[1] || '').trim();
+  const name =
+    rawName
+      .split(/[|\-–—·]/)[0]
+      .trim()
+      .slice(0, 60) || u.hostname.replace(/^www\./, '');
+
   return createBrand(userId, {
-    name: u.hostname.replace(/^www\./, ''),
+    name,
     sourceUrl: u.toString(),
     palette: {
       primary,

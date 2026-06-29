@@ -44,13 +44,36 @@ const PALETTE_KEYS = [
   ['text', 'settings.brands.text'],
 ] as const;
 
-function SwatchStrip({ palette }: { palette: Record<string, string> | null }) {
-  const colors = PALETTE_KEYS.map(([k]) => palette?.[k]).filter(
-    Boolean
-  ) as string[];
-  if (colors.length === 0) colors.push('#cccccc');
+function shade(hex: string, amt: number): string {
+  const h = hex.replace('#', '');
+  if (h.length !== 6) return hex;
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  const f = (c: number) =>
+    Math.max(
+      0,
+      Math.min(255, Math.round(amt < 0 ? c * (1 + amt) : c + (255 - c) * amt))
+    );
   return (
-    <div className="flex h-10 overflow-hidden rounded-lg border">
+    '#' +
+    [f(r), f(g), f(b)].map((x) => x.toString(16).padStart(2, '0')).join('')
+  );
+}
+
+function SwatchStrip({ palette }: { palette: Record<string, string> | null }) {
+  const p = palette ?? {};
+  const primary = p.primary || '#cccccc';
+  // 生成色阶：背景 → 主色 → 深主色 → 文字 → 浅主色（仿 heydecks 的色阶条）
+  const colors = [
+    p.background || '#ffffff',
+    primary,
+    shade(primary, -0.4),
+    p.text || '#111111',
+    shade(primary, 0.82),
+  ];
+  return (
+    <div className="flex h-20 w-full">
       {colors.map((c, i) => (
         <div key={i} className="flex-1" style={{ background: c }} />
       ))}
@@ -292,58 +315,64 @@ function BrandsPage() {
         </Card>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="flex flex-wrap gap-4">
         {list.data?.map((b) => (
-          <Card key={b.id}>
-            <CardContent className="space-y-3 py-4">
-              <SwatchStrip palette={b.palette} />
-              <div className="flex items-center gap-2">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate font-medium">{b.name}</span>
-                    {b.is_active && (
-                      <Badge>{m['settings.brands.active']()}</Badge>
-                    )}
-                  </div>
-                  <div className="text-muted-foreground truncate text-xs">
-                    {b.typography?.heading_font || 'Inter'}
-                    {b.tone ? ` · ${b.tone}` : ''}
-                  </div>
+          <Card key={b.id} className="w-full overflow-hidden p-0 sm:w-[340px]">
+            <SwatchStrip palette={b.palette} />
+            <div className="flex items-center gap-3 p-3">
+              <span
+                className="flex size-9 shrink-0 items-center justify-center rounded-md border text-sm font-semibold"
+                style={{
+                  background: b.palette?.primary || '#f3f3f3',
+                  color: b.palette?.primary ? '#fff' : 'inherit',
+                }}
+              >
+                {b.name.charAt(0).toUpperCase()}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="truncate font-medium">{b.name}</span>
+                  {b.is_active && (
+                    <span className="bg-primary size-1.5 shrink-0 rounded-full" />
+                  )}
                 </div>
-                {!b.is_active && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setActive.mutate(b.id)}
-                  >
-                    {m['settings.brands.set_active']()}
-                  </Button>
-                )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="text-muted-foreground hover:text-foreground inline-flex size-8 items-center justify-center rounded-md">
-                    <MoreHorizontal className="size-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setEditing(b)}>
-                      {m['settings.brands.edit']()}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => duplicate.mutate(b)}>
-                      {m['settings.brands.duplicate']()}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => exportJson(b)}>
-                      {m['settings.brands.export']()}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onClick={() => del.mutate(b.id)}
-                    >
-                      {m['settings.brands.delete']()}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="text-muted-foreground truncate text-xs">
+                  {b.typography?.heading_font || 'Inter'}
+                  {b.tone ? ` · ${b.tone}` : ''}
+                </div>
               </div>
-            </CardContent>
+              {!b.is_active && (
+                <button
+                  className="text-muted-foreground hover:text-foreground shrink-0 text-sm"
+                  onClick={() => setActive.mutate(b.id)}
+                >
+                  {m['settings.brands.set_active']()}
+                </button>
+              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger className="text-muted-foreground hover:text-foreground inline-flex size-8 shrink-0 items-center justify-center rounded-md">
+                  <MoreHorizontal className="size-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setEditing(b)}>
+                    {m['settings.brands.edit']()}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => duplicate.mutate(b)}>
+                    {m['settings.brands.duplicate']()}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportJson(b)}>
+                    {m['settings.brands.export']()}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => del.mutate(b.id)}
+                  >
+                    {m['settings.brands.delete']()}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </Card>
         ))}
       </div>
