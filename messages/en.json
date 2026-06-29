@@ -918,5 +918,10 @@
   "settings.draft.aud_customers": "Customers",
   "settings.draft.aud_team": "Team",
   "settings.draft.aud_students": "Students",
-  "settings.draft.aud_exec": "Executives"
+  "settings.draft.aud_exec": "Executives",
+  "settings.present.notes": "Notes",
+  "settings.present.no_notes": "No notes for this slide.",
+  "settings.present.next": "Next slide",
+  "settings.present.hints": "→ next · ← prev · G overview · F fullscreen · Esc exit",
+  "settings.deck_editor.present": "Present"
 }

@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Plus, Trash2 } from 'lucide-react';
+import { GripVertical, Play, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Link } from '@/core/i18n/navigation';
@@ -241,6 +241,13 @@ function DeckEditorPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            href={`/present/${id}`}
+            className={cn(buttonVariants({ size: 'sm' }), 'gap-1')}
+          >
+            <Play className="size-4" />
+            {m['settings.deck_editor.present']()}
+          </Link>
           <a
             href={`/api/decks/${id}/export?format=pptx`}
             className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}

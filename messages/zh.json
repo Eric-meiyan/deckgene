@@ -918,5 +918,10 @@
   "settings.draft.aud_customers": "客户",
   "settings.draft.aud_team": "团队",
   "settings.draft.aud_students": "学生",
-  "settings.draft.aud_exec": "高管"
+  "settings.draft.aud_exec": "高管",
+  "settings.present.notes": "备注",
+  "settings.present.no_notes": "本页无备注。",
+  "settings.present.next": "下一页",
+  "settings.present.hints": "→ 下一页 · ← 上一页 · G 概览 · F 全屏 · Esc 退出",
+  "settings.deck_editor.present": "演示"
 }
