@@ -56,16 +56,20 @@ async function GET({
         'PDF export not available (Browser Rendering not configured)'
       );
     }
-    const { deckToPdf } = await import('@/modules/deck/export-pdf.service');
-    const url = `${envConfigs.app_url}/d/${deck.slug}`;
-    const pdf = await deckToPdf(env.BROWSER, url);
-    return new Response(pdf as unknown as BodyInit, {
-      status: 200,
-      headers: {
-        'content-type': 'application/pdf',
-        'content-disposition': `attachment; filename="${deck.slug}.pdf"`,
-      },
-    });
+    try {
+      const { deckToPdf } = await import('@/modules/deck/export-pdf.service');
+      const url = `${envConfigs.app_url}/d/${deck.slug}`;
+      const pdf = await deckToPdf(env.BROWSER, url);
+      return new Response(pdf as unknown as BodyInit, {
+        status: 200,
+        headers: {
+          'content-type': 'application/pdf',
+          'content-disposition': `attachment; filename="${deck.slug}.pdf"`,
+        },
+      });
+    } catch (e) {
+      return respErr(`pdf failed: ${(e as Error).message?.slice(0, 300)}`);
+    }
   }
 
   return respErr(`unsupported format: ${format}`);
