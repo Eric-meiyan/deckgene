@@ -184,44 +184,10 @@ function PresentPage() {
           ))}
         </div>
       ) : (
-        <div className="flex flex-1 gap-4 overflow-hidden px-4 pb-4">
-          {/* 当前页 */}
-          <div className="flex flex-1 items-center justify-center">
-            <div className="w-full max-w-5xl" style={style}>
-              {slides[i] &&
-                renderSlide(slides[i].slide_type, slides[i].content)}
-            </div>
-          </div>
-          {/* 备注 + 下一页 */}
-          <div className="hidden w-72 shrink-0 flex-col gap-4 overflow-auto lg:flex">
-            <div>
-              <div className="mb-1 text-xs font-semibold text-neutral-500 uppercase">
-                {m['settings.present.notes']()}
-              </div>
-              <p className="text-sm text-neutral-200">
-                {slides[i]?.notes || (
-                  <span className="text-neutral-500">
-                    {m['settings.present.no_notes']()}
-                  </span>
-                )}
-              </p>
-            </div>
-            {slides[i + 1] && (
-              <div>
-                <div className="mb-1 text-xs font-semibold text-neutral-500 uppercase">
-                  {m['settings.present.next']()}
-                </div>
-                <div
-                  className="pointer-events-none overflow-hidden rounded-lg border border-neutral-800"
-                  style={style}
-                >
-                  {renderSlide(slides[i + 1].slide_type, slides[i + 1].content)}
-                </div>
-              </div>
-            )}
-            <p className="mt-auto text-xs text-neutral-500">
-              {m['settings.present.hints']()}
-            </p>
+        // 纯净演示：只显示当前幻灯片，居中放大
+        <div className="flex flex-1 items-center justify-center overflow-hidden px-6 pb-2">
+          <div className="w-full max-w-6xl" style={style}>
+            {slides[i] && renderSlide(slides[i].slide_type, slides[i].content)}
           </div>
         </div>
       )}
