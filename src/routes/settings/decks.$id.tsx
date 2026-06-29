@@ -241,6 +241,12 @@ function DeckEditorPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <a
+            href={`/api/decks/${id}/export?format=pptx`}
+            className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
+          >
+            {m['settings.deck_editor.export_pptx']()}
+          </a>
           {deck.url && (
             <a
               href={deck.url}
