@@ -930,5 +930,7 @@
   "settings.deck_editor.ai_iterated": "Slide rewritten",
   "settings.deck_editor.advanced_json": "Advanced: raw JSON",
   "settings.deck_editor.apply_json": "Apply JSON",
-  "settings.nav.docs": "Docs"
+  "settings.nav.docs": "Docs",
+  "settings.deck_editor.brand": "Brand",
+  "settings.deck_editor.brand_none": "No brand"
 }

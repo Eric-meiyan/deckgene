@@ -20,7 +20,7 @@ import { GripVertical, Play, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Link } from '@/core/i18n/navigation';
-import { apiDelete, apiGet, apiPost } from '@/lib/api-client';
+import { apiDelete, apiGet, apiPatch, apiPost } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
 import { SlideForm } from '@/components/deck/slide-form';
@@ -50,6 +50,7 @@ interface DeckDTO {
   slug: string;
   status: string;
   url: string | null;
+  brand_id: string | null;
   slides: SlideDTO[];
 }
 interface TemplateDTO {
@@ -57,8 +58,36 @@ interface TemplateDTO {
   name: string;
   category: string;
 }
+interface BrandLite {
+  id: string;
+  name: string;
+  palette: Record<string, string> | null;
+}
 
-function SlideEditor({ deckId, slide }: { deckId: string; slide: SlideDTO }) {
+function brandStyle(
+  palette?: Record<string, string> | null
+): React.CSSProperties {
+  if (!palette) return {};
+  const s: Record<string, string> = {};
+  if (palette.primary) {
+    s['--primary'] = palette.primary;
+    s['--brand-to'] = palette.primary;
+    s['--brand-from'] = palette.secondary || palette.accent || palette.primary;
+  }
+  if (palette.background) s['--background'] = palette.background;
+  if (palette.text) s['--foreground'] = palette.text;
+  return s as React.CSSProperties;
+}
+
+function SlideEditor({
+  deckId,
+  slide,
+  previewStyle,
+}: {
+  deckId: string;
+  slide: SlideDTO;
+  previewStyle?: React.CSSProperties;
+}) {
   const qc = useQueryClient();
   const {
     attributes,
@@ -143,8 +172,8 @@ function SlideEditor({ deckId, slide }: { deckId: string; slide: SlideDTO }) {
           </button>
         </div>
 
-        {/* 实时预览（由表单内容驱动） */}
-        <div className="overflow-hidden rounded-xl border">
+        {/* 实时预览（由表单内容驱动，套用所选品牌色） */}
+        <div className="overflow-hidden rounded-xl border" style={previewStyle}>
           {renderSlide(slide.slide_type, content)}
         </div>
 
@@ -241,6 +270,16 @@ function DeckEditorPage() {
     queryKey: ['slide-templates'],
     queryFn: () => apiGet<TemplateDTO[]>('/api/slide-templates'),
   });
+  const brandsQ = useQuery({
+    queryKey: ['brands'],
+    queryFn: () => apiGet<BrandLite[]>('/api/brands'),
+  });
+  const setBrand = useMutation({
+    mutationFn: (brandId: string | null) =>
+      apiPatch(`/api/decks/${id}`, { brand_id: brandId }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['deck', id] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   useEffect(() => {
     if (deckQ.data) setOrder(deckQ.data.slides.map((s) => s.id));
@@ -280,6 +319,8 @@ function DeckEditorPage() {
   const ordered = order
     .map((sid) => slideById.get(sid))
     .filter(Boolean) as SlideDTO[];
+  const currentBrand = brandsQ.data?.find((b) => b.id === deck.brand_id);
+  const previewStyle = brandStyle(currentBrand?.palette);
 
   function onDragEnd(e: DragEndEvent) {
     const { active, over } = e;
@@ -313,6 +354,24 @@ function DeckEditorPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Select
+            value={deck.brand_id ?? ''}
+            onValueChange={(v) => setBrand.mutate(v || null)}
+          >
+            <SelectTrigger className="h-8 w-40">
+              <SelectValue placeholder={m['settings.deck_editor.brand']()} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">
+                {m['settings.deck_editor.brand_none']()}
+              </SelectItem>
+              {brandsQ.data?.map((b) => (
+                <SelectItem key={b.id} value={b.id}>
+                  {b.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Link
             href={`/present/${id}`}
             className={cn(buttonVariants({ size: 'sm' }), 'gap-1')}
@@ -372,7 +431,12 @@ function DeckEditorPage() {
         <SortableContext items={order} strategy={verticalListSortingStrategy}>
           <div className="space-y-3">
             {ordered.map((s) => (
-              <SlideEditor key={s.id} deckId={id} slide={s} />
+              <SlideEditor
+                key={s.id}
+                deckId={id}
+                slide={s}
+                previewStyle={previewStyle}
+              />
             ))}
           </div>
         </SortableContext>

@@ -196,6 +196,22 @@ async function ownDeck(deckId: string, userId: string): Promise<Deck | null> {
 }
 
 /** 更新一页的 content（按 slide_type schema 校验）/ notes。 */
+/** 切换 deck 关联的品牌（编辑器内换肤）。brandId=null 清除。 */
+export async function setDeckBrand(
+  deckId: string,
+  userId: string,
+  brandId: string | null
+): Promise<Deck | null> {
+  const d = await ownDeck(deckId, userId);
+  if (!d) return null;
+  const [row] = await db()
+    .update(deck)
+    .set({ brandId })
+    .where(eq(deck.id, deckId))
+    .returning();
+  return row ?? null;
+}
+
 export async function updateSlide(
   deckId: string,
   slideId: string,
