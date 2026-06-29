@@ -45,7 +45,7 @@ function McpPage() {
   const cmd = `claude mcp add --transport http deckgene ${endpoint} \\\n  --header "Authorization: Bearer hd_live_YOUR_KEY"`;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-6">
       <div>
         <h1 className="text-2xl font-bold">{m['settings.mcp.title']()}</h1>
         <p className="text-muted-foreground text-sm">
