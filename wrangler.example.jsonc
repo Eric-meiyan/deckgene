@@ -6,11 +6,16 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "shipany-tanstack",
-  "compatibility_date": "2025-01-01",
-  // nodejs_compat_populate_process_env：把 vars/secrets 注入 process.env。
-  // 必需 —— src/config/index.ts 经 process.env 读 DATABASE_PROVIDER（缺了会回退
-  // sqlite+file: 导致 Workers 上 DB 全挂）、AUTH_SECRET、DEEPSEEK_API_KEY 等。
-  "compatibility_flags": ["nodejs_compat", "nodejs_compat_populate_process_env"],
+  // 2026-03-16+：node:https 等（Browser Rendering / @cloudflare/puppeteer 需要）。
+  "compatibility_date": "2026-03-16",
+  // nodejs_compat_populate_process_env：把 vars/secrets 注入 process.env（必需 ——
+  //   src/config 经 process.env 读 DATABASE_PROVIDER 等，缺了 Workers 上 DB 全挂）。
+  // no_websocket_standard_binary_type：仅用 Browser Rendering(@cloudflare/puppeteer) 时需要。
+  "compatibility_flags": [
+    "nodejs_compat",
+    "nodejs_compat_populate_process_env",
+    "no_websocket_standard_binary_type",
+  ],
   "observability": {
     "enabled": true,
   },
