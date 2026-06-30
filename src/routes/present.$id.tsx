@@ -24,20 +24,22 @@ interface DeckDTO {
 interface BrandDTO {
   id: string;
   palette: Record<string, string> | null;
+  typography: Record<string, string> | null;
 }
 
-function brandStyle(
-  palette?: Record<string, string> | null
-): React.CSSProperties {
-  if (!palette) return {};
+function brandStyle(brand?: BrandDTO | null): React.CSSProperties {
+  const palette = brand?.palette;
+  const t = brand?.typography;
   const s: Record<string, string> = {};
-  if (palette.primary) {
+  if (palette?.primary) {
     s['--primary'] = palette.primary;
     s['--brand-to'] = palette.primary;
     s['--brand-from'] = palette.secondary || palette.accent || palette.primary;
   }
-  if (palette.background) s['--background'] = palette.background;
-  if (palette.text) s['--foreground'] = palette.text;
+  if (palette?.background) s['--background'] = palette.background;
+  if (palette?.text) s['--foreground'] = palette.text;
+  if (t?.body_font) s['--body-font'] = t.body_font;
+  if (t?.heading_font) s['--heading-font'] = t.heading_font;
   return s as React.CSSProperties;
 }
 
@@ -70,8 +72,7 @@ function PresentPage() {
   const deck = deckQ.data;
   const slides = deck?.slides ?? [];
   const total = slides.length;
-  const palette =
-    brandsQ.data?.find((b) => b.id === deck?.brand_id)?.palette ?? null;
+  const brand = brandsQ.data?.find((b) => b.id === deck?.brand_id) ?? null;
 
   const next = useCallback(
     () => setI((v) => Math.min(total - 1, v + 1)),
@@ -116,7 +117,7 @@ function PresentPage() {
     return () => window.removeEventListener('keydown', onKey);
   }, [next, prev, exit, overview, toggleFullscreen]);
 
-  const style = brandStyle(palette);
+  const style = brandStyle(brand);
 
   return (
     <div
@@ -162,7 +163,7 @@ function PresentPage() {
       {/* 主体 */}
       {overview ? (
         <div
-          className="grid flex-1 grid-cols-2 gap-4 overflow-auto p-6 sm:grid-cols-3 lg:grid-cols-4"
+          className="deck-fonts grid flex-1 grid-cols-2 gap-4 overflow-auto p-6 sm:grid-cols-3 lg:grid-cols-4"
           style={style}
         >
           {slides.map((s, idx) => (
@@ -186,7 +187,7 @@ function PresentPage() {
       ) : (
         // 纯净演示：只显示当前幻灯片，居中放大
         <div className="flex flex-1 items-center justify-center overflow-hidden px-6 pb-2">
-          <div className="w-full max-w-6xl" style={style}>
+          <div className="deck-fonts w-full max-w-6xl" style={style}>
             {slides[i] && renderSlide(slides[i].slide_type, slides[i].content)}
           </div>
         </div>

@@ -233,3 +233,11 @@
     }
   }
 }
+
+/* 品牌字体：容器用正文字体，标题用标题字体（见 brand 编辑器/渲染） */
+.deck-fonts {
+  font-family: var(--body-font), inherit;
+}
+.deck-fonts :is(h1, h2, h3) {
+  font-family: var(--heading-font), var(--body-font), inherit;
+}

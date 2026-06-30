@@ -66,20 +66,23 @@ interface BrandLite {
   id: string;
   name: string;
   palette: Record<string, string> | null;
+  typography: Record<string, string> | null;
 }
 
 function brandStyle(
-  palette?: Record<string, string> | null
+  palette?: Record<string, string> | null,
+  typography?: Record<string, string> | null
 ): React.CSSProperties {
-  if (!palette) return {};
   const s: Record<string, string> = {};
-  if (palette.primary) {
+  if (palette?.primary) {
     s['--primary'] = palette.primary;
     s['--brand-to'] = palette.primary;
     s['--brand-from'] = palette.secondary || palette.accent || palette.primary;
   }
-  if (palette.background) s['--background'] = palette.background;
-  if (palette.text) s['--foreground'] = palette.text;
+  if (palette?.background) s['--background'] = palette.background;
+  if (palette?.text) s['--foreground'] = palette.text;
+  if (typography?.body_font) s['--body-font'] = typography.body_font;
+  if (typography?.heading_font) s['--heading-font'] = typography.heading_font;
   return s as React.CSSProperties;
 }
 
@@ -177,7 +180,10 @@ function SlideEditor({
         </div>
 
         {/* 实时预览（由表单内容驱动，套用所选品牌色） */}
-        <div className="overflow-hidden rounded-xl border" style={previewStyle}>
+        <div
+          className="deck-fonts overflow-hidden rounded-xl border"
+          style={previewStyle}
+        >
           {renderSlide(slide.slide_type, content)}
         </div>
 
@@ -324,7 +330,10 @@ function DeckEditorPage() {
     .map((sid) => slideById.get(sid))
     .filter(Boolean) as SlideDTO[];
   const currentBrand = brandsQ.data?.find((b) => b.id === deck.brand_id);
-  const previewStyle = brandStyle(currentBrand?.palette);
+  const previewStyle = brandStyle(
+    currentBrand?.palette,
+    currentBrand?.typography
+  );
 
   function onDragEnd(e: DragEndEvent) {
     const { active, over } = e;

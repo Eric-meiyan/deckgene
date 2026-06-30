@@ -5,11 +5,19 @@ import { toast } from 'sonner';
 
 import { Link } from '@/core/i18n/navigation';
 import { apiGet, apiPatch } from '@/lib/api-client';
+import { BRAND_FONTS } from '@/lib/fonts';
 import { m } from '@/paraglide/messages.js';
 import { sampleSlideContent } from '@/components/deck/slide-form';
 import { renderSlide } from '@/components/deck/slides';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface BrandDTO {
   id: string;
@@ -37,7 +45,8 @@ const PREVIEW_SLIDES: { type: string; variant?: string }[] = [
 
 function brandStyle(
   palette: Record<string, string>,
-  font?: string
+  headingFont?: string,
+  bodyFont?: string
 ): React.CSSProperties {
   const s: Record<string, string> = {};
   if (palette.primary) {
@@ -47,8 +56,38 @@ function brandStyle(
   }
   if (palette.background) s['--background'] = palette.background;
   if (palette.text) s['--foreground'] = palette.text;
-  if (font) s.fontFamily = `${font}, system-ui, sans-serif`;
+  if (bodyFont) s['--body-font'] = bodyFont;
+  if (headingFont) s['--heading-font'] = headingFont;
   return s as React.CSSProperties;
+}
+
+function FontSelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <Select value={value} onValueChange={(v) => onChange(v || '')}>
+      <SelectTrigger className="w-full">
+        <SelectValue placeholder="Inter">
+          {(v: unknown) => (
+            <span style={{ fontFamily: (v as string) || undefined }}>
+              {(v as string) || 'Inter'}
+            </span>
+          )}
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        {BRAND_FONTS.map((f) => (
+          <SelectItem key={f} value={f}>
+            <span style={{ fontFamily: f }}>{f}</span>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 }
 
 function BrandEditor({ brand }: { brand: BrandDTO }) {
@@ -86,7 +125,7 @@ function BrandEditor({ brand }: { brand: BrandDTO }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const style = brandStyle(palette, bodyFont);
+  const style = brandStyle(palette, headingFont, bodyFont);
 
   return (
     <div className="space-y-4 p-4 md:p-6">
@@ -118,7 +157,7 @@ function BrandEditor({ brand }: { brand: BrandDTO }) {
           {PREVIEW_SLIDES.map((s, i) => (
             <div
               key={i}
-              className="overflow-hidden rounded-xl border"
+              className="deck-fonts overflow-hidden rounded-xl border"
               style={style}
             >
               {renderSlide(s.type, {
@@ -163,21 +202,13 @@ function BrandEditor({ brand }: { brand: BrandDTO }) {
             <p className="text-muted-foreground mb-1 text-xs">
               {m['settings.brands.heading_font']()}
             </p>
-            <Input
-              placeholder="Inter"
-              value={headingFont}
-              onChange={(e) => setHeadingFont(e.target.value)}
-            />
+            <FontSelect value={headingFont} onChange={setHeadingFont} />
           </div>
           <div>
             <p className="text-muted-foreground mb-1 text-xs">
               {m['settings.brands.body_font']()}
             </p>
-            <Input
-              placeholder="Inter"
-              value={bodyFont}
-              onChange={(e) => setBodyFont(e.target.value)}
-            />
+            <FontSelect value={bodyFont} onChange={setBodyFont} />
           </div>
 
           <div>

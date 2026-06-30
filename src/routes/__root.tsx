@@ -13,6 +13,7 @@ import { createServerFn } from '@tanstack/react-start';
 import { ThemeProvider } from 'next-themes';
 
 import { envConfigs } from '@/config';
+import { BRAND_FONTS_HREF } from '@/lib/fonts';
 import { getQueryClient } from '@/lib/query-client';
 import { getLocale, locales, localizeUrl } from '@/paraglide/runtime.js';
 import { GoogleAnalytics } from '@/components/analytics/google-analytics';
@@ -73,6 +74,14 @@ export const Route = createRootRoute({
       links: [
         { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
         { rel: 'apple-touch-icon', href: '/favicon.svg' },
+        // 品牌精选字体（品牌编辑器/公开渲染/演示 真实字体显示）
+        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        {
+          rel: 'preconnect',
+          href: 'https://fonts.gstatic.com',
+          crossOrigin: 'anonymous',
+        },
+        { rel: 'stylesheet', href: BRAND_FONTS_HREF },
         ...locales.map((loc) => ({
           rel: 'alternate',
           hrefLang: loc,

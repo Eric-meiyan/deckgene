@@ -16,8 +16,8 @@ export interface RenderBrand {
  * 仅注入存在的键；未提供则用 deckgene 默认主题。
  */
 function brandStyle(brand?: RenderBrand | null): React.CSSProperties {
-  const p = brand?.palette;
-  if (!p) return {};
+  const p = brand?.palette ?? {};
+  const t = brand?.typography ?? {};
   const style: Record<string, string> = {};
   if (p.primary) {
     style['--primary'] = p.primary;
@@ -26,6 +26,8 @@ function brandStyle(brand?: RenderBrand | null): React.CSSProperties {
   }
   if (p.background) style['--background'] = p.background;
   if (p.text) style['--foreground'] = p.text;
+  if (t.body_font) style['--body-font'] = t.body_font;
+  if (t.heading_font) style['--heading-font'] = t.heading_font;
   return style as React.CSSProperties;
 }
 
@@ -42,7 +44,7 @@ export function DeckRenderer({
 }) {
   return (
     <div
-      className="dot-grid bg-background min-h-screen w-full py-10"
+      className="dot-grid deck-fonts bg-background min-h-screen w-full py-10"
       style={brandStyle(brand)}
     >
       <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4">
