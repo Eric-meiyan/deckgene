@@ -86,6 +86,8 @@ const LABELS_ZH: Record<string, string> = {
   image: '配图链接',
   imageUrl: '图片链接',
   events: '事件',
+  align: '对齐',
+  size: '字号',
 };
 const ENUM_ZH: Record<string, string> = {
   light: '浅色',
@@ -95,6 +97,17 @@ const ENUM_ZH: Record<string, string> = {
   up: '上升',
   down: '下降',
   flat: '持平',
+  left: '左对齐',
+  center: '居中',
+  right: '右对齐',
+  sm: '小',
+  md: '中',
+  lg: '大',
+};
+const ENUM_EN: Record<string, string> = {
+  sm: 'Small',
+  md: 'Medium',
+  lg: 'Large',
 };
 
 // 英文：把 key 拆词首字母大写（buttonHref → Button Href）
@@ -109,7 +122,7 @@ function labelFor(k: string) {
   return isZh() ? (LABELS_ZH[k] ?? humanize(k)) : (LABELS_EN[k] ?? humanize(k));
 }
 function enumLabel(v: string) {
-  return isZh() ? (ENUM_ZH[v] ?? v) : humanize(v);
+  return isZh() ? (ENUM_ZH[v] ?? v) : (ENUM_EN[v] ?? humanize(v));
 }
 
 function unwrap(v: Z): { node: Z; optional: boolean } {

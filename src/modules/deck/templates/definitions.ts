@@ -558,6 +558,8 @@ const pullQuoteWall: SlideTemplate = {
   whenToUse: 'Several short quotes arranged together.',
   schema: z.object({
     variant: surface,
+    align: z.enum(['left', 'center', 'right']).optional().catch(undefined),
+    size: z.enum(['sm', 'md', 'lg']).optional().catch(undefined),
     quotes: z
       .array(z.object({ text: long(160), author: short(60).optional() }))
       .min(2)

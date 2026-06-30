@@ -832,11 +832,19 @@ function ProConCardSlide({ c }: { c: Content }) {
 // ── Close ──
 function PullQuoteWallSlide({ c }: { c: Content }) {
   const quotes: Content[] = c.quotes ?? [];
+  const align =
+    c.align === 'center'
+      ? 'text-center'
+      : c.align === 'right'
+        ? 'text-right'
+        : 'text-left';
+  const size =
+    c.size === 'sm' ? 'text-lg' : c.size === 'lg' ? 'text-4xl' : 'text-2xl';
   return (
     <Surface variant={c.variant}>
-      <div className="space-y-4">
+      <div className={cn('space-y-4', align)}>
         {quotes.map((q, i) => (
-          <p key={i} className="text-xl font-medium">
+          <p key={i} className={cn('font-medium', size)}>
             “{q.text}”
             {q.author && (
               <span className={cn('ml-2 text-sm', mutedClass(c.variant))}>
