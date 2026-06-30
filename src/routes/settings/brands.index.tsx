@@ -4,6 +4,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { MoreHorizontal, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { Link } from '@/core/i18n/navigation';
 import { apiDelete, apiGet, apiPatch, apiPost } from '@/lib/api-client';
 import { m } from '@/paraglide/messages.js';
 import { Badge } from '@/components/ui/badge';
@@ -331,7 +332,12 @@ function BrandsPage() {
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <span className="truncate font-medium">{b.name}</span>
+                  <Link
+                    href={`/settings/brands/${b.id}`}
+                    className="hover:text-primary truncate font-medium"
+                  >
+                    {b.name}
+                  </Link>
                   {b.is_active && (
                     <span className="bg-primary size-1.5 shrink-0 rounded-full" />
                   )}
@@ -384,6 +390,6 @@ function BrandsPage() {
   );
 }
 
-export const Route = createFileRoute('/settings/brands')({
+export const Route = createFileRoute('/settings/brands/')({
   component: BrandsPage,
 });

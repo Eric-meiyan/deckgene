@@ -936,5 +936,10 @@
   "settings.nav.library": "Slide library",
   "settings.library.title": "Slide library",
   "settings.library.subtitle": "Browse all slide types and what each looks like.",
-  "settings.library.search": "Search slide types…"
+  "settings.library.search": "Search slide types…",
+  "settings.brands.all_brands": "All brands",
+  "settings.brands.live_preview": "Live preview",
+  "settings.brands.heading_font": "Heading font",
+  "settings.brands.body_font": "Body font",
+  "settings.brands.name": "Name"
 }

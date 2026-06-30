@@ -936,5 +936,10 @@
   "settings.nav.library": "页型库",
   "settings.library.title": "页型库",
   "settings.library.subtitle": "浏览全部页型，看看每个长什么样。",
-  "settings.library.search": "搜索页型…"
+  "settings.library.search": "搜索页型…",
+  "settings.brands.all_brands": "全部品牌",
+  "settings.brands.live_preview": "实时预览",
+  "settings.brands.heading_font": "标题字体",
+  "settings.brands.body_font": "正文字体",
+  "settings.brands.name": "名称"
 }
