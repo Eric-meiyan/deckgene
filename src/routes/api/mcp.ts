@@ -72,7 +72,7 @@ const TOOLS: Tool[] = [
   {
     name: 'generate_deck',
     description:
-      'Generate a complete deck from text. Plans slides by narrative arc, fills each by its schema, persists. Uses the active brand unless brand_id is given. Returns deck_id + slug.',
+      'Generate a complete deck from text. Plans slides by narrative arc, fills each by its schema, persists. Uses the active brand unless brand_id is given. The deck is created as a DRAFT — the public /d/{slug} URL only works after publish_deck. Returns deck_id, status, edit_url, and (once published) the public url.',
     inputSchema: obj(
       {
         input: { type: 'string', description: 'Source text (<= 8000 chars)' },
@@ -88,7 +88,20 @@ const TOOLS: Tool[] = [
         title: args.title,
         brandId: args.brand_id,
       });
-      return { deck_id: deck.id, slug: deck.slug, slides: deck.slides.length };
+      const published = deck.status === 'published';
+      return {
+        deck_id: deck.id,
+        slug: deck.slug,
+        slides: deck.slides.length,
+        status: deck.status,
+        url: published
+          ? `${envConfigs.app_url}/d/${encodeURIComponent(deck.slug)}`
+          : null,
+        edit_url: `${envConfigs.app_url}/settings/decks/${deck.id}`,
+        hint: published
+          ? undefined
+          : 'Draft created. Call publish_deck with this deck_id to make the public url work.',
+      };
     },
   },
   {
