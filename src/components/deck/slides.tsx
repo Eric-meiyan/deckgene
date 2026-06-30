@@ -944,7 +944,407 @@ function OfferStackSlide({ c }: { c: Content }) {
   );
 }
 
+// ════════ 批次 2 渲染器（Argue 剩余）════════
+
+function Tbl({
+  head,
+  rows,
+}: {
+  head: (string | undefined)[];
+  rows: React.ReactNode[][];
+}) {
+  return (
+    <div className="overflow-auto">
+      <table className="w-full text-left text-sm">
+        <thead>
+          <tr className="border-border/40 border-b">
+            {head.map((h, i) => (
+              <th key={i} className="px-3 py-2 font-semibold">
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i} className="border-border/20 border-b">
+              {r.map((cell, j) => (
+                <td key={j} className="px-3 py-2">
+                  {cell}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+const RAG: Record<string, string> = {
+  low: 'bg-emerald-500',
+  med: 'bg-amber-500',
+  high: 'bg-red-500',
+  'on-track': 'bg-emerald-500',
+  'at-risk': 'bg-amber-500',
+  'off-track': 'bg-red-500',
+};
+function Dot({ k }: { k?: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span
+        className={cn(
+          'inline-block size-2.5 rounded-full',
+          RAG[k ?? ''] ?? 'bg-muted-foreground/40'
+        )}
+      />
+      {k}
+    </span>
+  );
+}
+
+function ExerciseSlide({ c }: { c: Content }) {
+  const steps: string[] = c.steps ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <div className="mb-3 flex items-center gap-3">
+        <H>{c.heading ?? 'Exercise'}</H>
+        {c.time && (
+          <span className="bg-primary/15 text-primary rounded-full px-3 py-0.5 text-xs font-semibold">
+            {c.time}
+          </span>
+        )}
+      </div>
+      <p className="mb-4 max-w-2xl text-lg">{c.prompt}</p>
+      {steps.length > 0 && (
+        <ol className="list-decimal space-y-1 pl-5">
+          {steps.map((s, i) => (
+            <li key={i}>{s}</li>
+          ))}
+        </ol>
+      )}
+    </Surface>
+  );
+}
+function QuadrantSlide({ c }: { c: Content }) {
+  const items: Content[] = c.items ?? [];
+  const cell = (xv: string, yv: string) =>
+    items.filter((it) => (it.x ?? 'low') === xv && (it.y ?? 'low') === yv);
+  const Box = ({ list }: { list: Content[] }) => (
+    <div className="border-border/40 bg-background/40 flex flex-wrap content-start gap-1.5 rounded-xl border p-3">
+      {list.map((it, i) => (
+        <span
+          key={i}
+          className="bg-primary/15 text-primary rounded-md px-2 py-0.5 text-xs"
+        >
+          {it.label}
+        </span>
+      ))}
+    </div>
+  );
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading}</H>
+      <div className="grid grid-cols-2 grid-rows-2 gap-2">
+        <Box list={cell('low', 'high')} />
+        <Box list={cell('high', 'high')} />
+        <Box list={cell('low', 'low')} />
+        <Box list={cell('high', 'low')} />
+      </div>
+      <div
+        className={cn(
+          'mt-2 flex justify-between text-xs',
+          mutedClass(c.variant)
+        )}
+      >
+        <span>{c.xAxis ? `${c.xAxis} →` : ''}</span>
+        <span>{c.yAxis ? `↑ ${c.yAxis}` : ''}</span>
+      </div>
+    </Surface>
+  );
+}
+function ComparisonMatrixSlide({ c }: { c: Content }) {
+  const rows: Content[] = c.rows ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading}</H>
+      <Tbl
+        head={['', c.colA, c.colB, c.colC].filter((x, i) => i < 2 || x)}
+        rows={rows.map((r) =>
+          [r.label, r.a, r.b, c.colC ? r.c : undefined].filter(
+            (_, i) => i < 3 || c.colC
+          )
+        )}
+      />
+    </Surface>
+  );
+}
+function RecipeSlide({ c }: { c: Content }) {
+  const ing: string[] = c.ingredients ?? [];
+  const steps: string[] = c.steps ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading}</H>
+      <div className="grid gap-6 sm:grid-cols-[1fr_2fr]">
+        <div>
+          <p className={cn('mb-2 text-sm font-bold', eyebrowClass(c.variant))}>
+            Ingredients
+          </p>
+          <ul className="space-y-1 text-sm">
+            {ing.map((x, i) => (
+              <li key={i}>• {x}</li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <p className={cn('mb-2 text-sm font-bold', eyebrowClass(c.variant))}>
+            Method
+          </p>
+          <ol className="list-decimal space-y-1 pl-5">
+            {steps.map((x, i) => (
+              <li key={i}>{x}</li>
+            ))}
+          </ol>
+        </div>
+      </div>
+    </Surface>
+  );
+}
+function PhaseStripSlide({ c }: { c: Content }) {
+  const phases: Content[] = c.phases ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading}</H>
+      <div className="flex items-stretch gap-2">
+        {phases.map((p, i) => (
+          <div key={i} className="flex flex-1 items-center gap-2">
+            <div className="border-border/40 bg-background/40 flex-1 rounded-xl border p-4">
+              <p className="font-semibold">{p.label}</p>
+              {p.detail && (
+                <p className={cn('mt-1 text-sm', mutedClass(c.variant))}>
+                  {p.detail}
+                </p>
+              )}
+            </div>
+            {i < phases.length - 1 && (
+              <span className={eyebrowClass(c.variant)}>→</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function RiskRegisterSlide({ c }: { c: Content }) {
+  const risks: Content[] = c.risks ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'Risks'}</H>
+      <Tbl
+        head={['Risk', 'Likelihood', 'Impact', 'Mitigation']}
+        rows={risks.map((r) => [
+          r.risk,
+          <Dot k={r.likelihood} />,
+          <Dot k={r.impact} />,
+          r.mitigation,
+        ])}
+      />
+    </Surface>
+  );
+}
+function QuizSlide({ c }: { c: Content }) {
+  const options: string[] = c.options ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <p className="mb-5 text-2xl font-bold sm:text-3xl">{c.question}</p>
+      <ul className="space-y-2">
+        {options.map((o, i) => (
+          <li key={i} className="flex items-center gap-3">
+            <span className="bg-primary/15 text-primary inline-flex size-7 items-center justify-center rounded-full text-sm font-bold">
+              {String.fromCharCode(65 + i)}
+            </span>
+            {o}
+          </li>
+        ))}
+      </ul>
+      {c.answer && (
+        <p className={cn('mt-4 text-sm', eyebrowClass(c.variant))}>
+          ✓ {c.answer}
+        </p>
+      )}
+    </Surface>
+  );
+}
+function ReflectionSlide({ c }: { c: Content }) {
+  return (
+    <Surface variant={c.variant} className="items-center text-center">
+      <Eyebrow variant={c.variant}>{c.eyebrow ?? 'Reflect'}</Eyebrow>
+      <p className="max-w-2xl text-2xl font-medium sm:text-3xl">{c.prompt}</p>
+    </Surface>
+  );
+}
+function StatusUpdateSlide({ c }: { c: Content }) {
+  const items: Content[] = c.items ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'Status'}</H>
+      <ul className="space-y-2.5">
+        {items.map((it, i) => (
+          <li key={i} className="flex items-center justify-between gap-4">
+            <span className="font-medium">{it.workstream}</span>
+            <span className="flex items-center gap-4">
+              {it.note && (
+                <span className={cn('text-sm', mutedClass(c.variant))}>
+                  {it.note}
+                </span>
+              )}
+              <Dot k={it.status} />
+            </span>
+          </li>
+        ))}
+      </ul>
+    </Surface>
+  );
+}
+function OkrSlide({ c }: { c: Content }) {
+  const krs: string[] = c.keyResults ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <p className={cn('text-sm font-bold', eyebrowClass(c.variant))}>
+        OBJECTIVE
+      </p>
+      <h2 className="mb-5 text-2xl font-bold sm:text-3xl">{c.objective}</h2>
+      <ul className="space-y-2">
+        {krs.map((k, i) => (
+          <li key={i} className="flex items-start gap-3">
+            <span className={eyebrowClass(c.variant)}>◆</span>
+            {k}
+          </li>
+        ))}
+      </ul>
+    </Surface>
+  );
+}
+function DecisionMatrixSlide({ c }: { c: Content }) {
+  const options: Content[] = c.options ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading}</H>
+      <ul className="space-y-2">
+        {options.map((o, i) => {
+          const win = c.winner && o.label === c.winner;
+          return (
+            <li
+              key={i}
+              className={cn(
+                'flex items-center justify-between gap-4 rounded-xl border px-4 py-2.5',
+                win
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border/40 bg-background/40'
+              )}
+            >
+              <span className="font-medium">
+                {o.label}
+                {win && <span className="ml-2">★</span>}
+              </span>
+              <span className="flex items-center gap-4">
+                {o.note && (
+                  <span className={cn('text-sm', mutedClass(c.variant))}>
+                    {o.note}
+                  </span>
+                )}
+                {o.score && <span className="font-bold">{o.score}</span>}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </Surface>
+  );
+}
+function RaciSlide({ c }: { c: Content }) {
+  const rows: Content[] = c.rows ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'RACI'}</H>
+      <Tbl
+        head={['Task', 'R', 'A', 'C', 'I']}
+        rows={rows.map((r) => [
+          r.task,
+          r.responsible,
+          r.accountable,
+          r.consulted,
+          r.informed,
+        ])}
+      />
+    </Surface>
+  );
+}
+function SocialProofSlide({ c }: { c: Content }) {
+  const logos: string[] = c.logos ?? [];
+  const stats: Content[] = c.stats ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading}</H>
+      {logos.length > 0 && (
+        <div className="mb-5 flex flex-wrap gap-2">
+          {logos.map((l, i) => (
+            <span
+              key={i}
+              className="border-border/40 bg-background/40 rounded-lg border px-3 py-1.5 text-sm font-medium"
+            >
+              {l}
+            </span>
+          ))}
+        </div>
+      )}
+      {c.quote && <p className="mb-5 text-xl font-medium">“{c.quote}”</p>}
+      {stats.length > 0 && (
+        <div className="flex gap-10">
+          {stats.map((s, i) => (
+            <div key={i}>
+              <div className="text-3xl font-bold">{s.value}</div>
+              <div className={cn('text-sm', mutedClass(c.variant))}>
+                {s.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Surface>
+  );
+}
+function LearningObjectivesSlide({ c }: { c: Content }) {
+  const items: string[] = c.items ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'Learning objectives'}</H>
+      <ul className="space-y-3">
+        {items.map((it, i) => (
+          <li key={i} className="flex items-start gap-3">
+            <span className={eyebrowClass(c.variant)}>◎</span>
+            {it}
+          </li>
+        ))}
+      </ul>
+    </Surface>
+  );
+}
+
 const RENDERERS: Record<string, (c: Content) => React.ReactNode> = {
+  exercise: (c) => <ExerciseSlide c={c} />,
+  quadrant: (c) => <QuadrantSlide c={c} />,
+  comparisonMatrix: (c) => <ComparisonMatrixSlide c={c} />,
+  recipe: (c) => <RecipeSlide c={c} />,
+  phaseStrip: (c) => <PhaseStripSlide c={c} />,
+  riskRegister: (c) => <RiskRegisterSlide c={c} />,
+  quiz: (c) => <QuizSlide c={c} />,
+  reflection: (c) => <ReflectionSlide c={c} />,
+  statusUpdate: (c) => <StatusUpdateSlide c={c} />,
+  okr: (c) => <OkrSlide c={c} />,
+  decisionMatrix: (c) => <DecisionMatrixSlide c={c} />,
+  raci: (c) => <RaciSlide c={c} />,
+  socialProof: (c) => <SocialProofSlide c={c} />,
+  learningObjectives: (c) => <LearningObjectivesSlide c={c} />,
   author: (c) => <AuthorSlide c={c} />,
   toc: (c) => <TocSlide c={c} />,
   anecdote: (c) => <AnecdoteSlide c={c} />,

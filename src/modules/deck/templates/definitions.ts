@@ -626,8 +626,258 @@ const offerStack: SlideTemplate = {
   }),
 };
 
+// ════════ 批次 2：Argue 剩余 14 ════════
+const lowHigh = () => z.enum(['low', 'high']).optional().catch(undefined);
+const lowMedHigh = () =>
+  z.enum(['low', 'med', 'high']).optional().catch(undefined);
+
+const exercise: SlideTemplate = {
+  key: 'exercise',
+  name: 'Exercise',
+  category: 'Argue',
+  whenToUse: 'A hands-on task for the audience. Use in workshops and training.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    prompt: long(300),
+    steps: z.array(short(120)).max(6).optional(),
+    time: short(24).optional(),
+  }),
+};
+const quadrant: SlideTemplate = {
+  key: 'quadrant',
+  name: '2×2 quadrant',
+  category: 'Argue',
+  whenToUse: 'A 2x2 matrix positioning items on two axes.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    xAxis: short(40).optional(),
+    yAxis: short(40).optional(),
+    items: z
+      .array(z.object({ label: short(40), x: lowHigh(), y: lowHigh() }))
+      .max(8),
+  }),
+};
+const comparisonMatrix: SlideTemplate = {
+  key: 'comparisonMatrix',
+  name: 'Comparison matrix',
+  category: 'Argue',
+  whenToUse:
+    'Many options scored across criteria. Use for a feature comparison.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    colA: short(24),
+    colB: short(24),
+    colC: short(24).optional(),
+    rows: z
+      .array(
+        z.object({
+          label: short(60),
+          a: short(24).optional(),
+          b: short(24).optional(),
+          c: short(24).optional(),
+        })
+      )
+      .min(1)
+      .max(8),
+  }),
+};
+const recipe: SlideTemplate = {
+  key: 'recipe',
+  name: 'Recipe',
+  category: 'Argue',
+  whenToUse:
+    'Ingredients plus a method. Use for a how-to with inputs and steps.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    ingredients: z.array(short(80)).min(1).max(8),
+    steps: z.array(short(120)).min(1).max(8),
+  }),
+};
+const phaseStrip: SlideTemplate = {
+  key: 'phaseStrip',
+  name: 'Phase strip',
+  category: 'Argue',
+  whenToUse: 'A few phases as a horizontal strip. Use for a high-level plan.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    phases: z
+      .array(z.object({ label: short(40), detail: short(80).optional() }))
+      .min(2)
+      .max(5),
+  }),
+};
+const riskRegister: SlideTemplate = {
+  key: 'riskRegister',
+  name: 'Risk register',
+  category: 'Argue',
+  whenToUse: 'Risks with likelihood, impact, and mitigation.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    risks: z
+      .array(
+        z.object({
+          risk: short(120),
+          likelihood: lowMedHigh(),
+          impact: lowMedHigh(),
+          mitigation: short(120).optional(),
+        })
+      )
+      .min(1)
+      .max(6),
+  }),
+};
+const quiz: SlideTemplate = {
+  key: 'quiz',
+  name: 'Quiz question',
+  category: 'Argue',
+  whenToUse: 'A question with answer options. Use to check understanding.',
+  schema: z.object({
+    variant: surface,
+    question: long(200),
+    options: z.array(short(80)).min(2).max(5),
+    answer: short(80).optional(),
+  }),
+};
+const reflection: SlideTemplate = {
+  key: 'reflection',
+  name: 'Reflection prompt',
+  category: 'Argue',
+  whenToUse: 'A reflective prompt. Use to pause and have people think.',
+  schema: z.object({
+    variant: surface,
+    eyebrow: short(40).optional(),
+    prompt: long(300),
+  }),
+};
+const statusUpdate: SlideTemplate = {
+  key: 'statusUpdate',
+  name: 'Status update',
+  category: 'Argue',
+  whenToUse: 'Progress across workstreams. Use for a recurring update.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    items: z
+      .array(
+        z.object({
+          workstream: short(60),
+          status: z
+            .enum(['on-track', 'at-risk', 'off-track'])
+            .optional()
+            .catch(undefined),
+          note: short(120).optional(),
+        })
+      )
+      .min(1)
+      .max(6),
+  }),
+};
+const okr: SlideTemplate = {
+  key: 'okr',
+  name: 'OKR',
+  category: 'Argue',
+  whenToUse: 'Objectives with measurable key results.',
+  schema: z.object({
+    variant: surface,
+    objective: long(160),
+    keyResults: z.array(short(120)).min(1).max(5),
+  }),
+};
+const decisionMatrix: SlideTemplate = {
+  key: 'decisionMatrix',
+  name: 'Decision matrix',
+  category: 'Argue',
+  whenToUse: 'Weighted scoring of options with a winner.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    options: z
+      .array(
+        z.object({
+          label: short(60),
+          score: short(16).optional(),
+          note: short(80).optional(),
+        })
+      )
+      .min(2)
+      .max(6),
+    winner: short(60).optional(),
+  }),
+};
+const raci: SlideTemplate = {
+  key: 'raci',
+  name: 'RACI matrix',
+  category: 'Argue',
+  whenToUse: 'Responsible, Accountable, Consulted, Informed. Assign roles.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    rows: z
+      .array(
+        z.object({
+          task: short(60),
+          responsible: short(40).optional(),
+          accountable: short(40).optional(),
+          consulted: short(40).optional(),
+          informed: short(40).optional(),
+        })
+      )
+      .min(1)
+      .max(8),
+  }),
+};
+const socialProof: SlideTemplate = {
+  key: 'socialProof',
+  name: 'Social proof',
+  category: 'Argue',
+  whenToUse:
+    'Logos, quotes, and numbers stacked. Use to build credibility fast.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    logos: z.array(short(40)).max(8).optional(),
+    quote: long(200).optional(),
+    stats: z
+      .array(z.object({ value: short(12), label: short(40) }))
+      .max(4)
+      .optional(),
+  }),
+};
+const learningObjectives: SlideTemplate = {
+  key: 'learningObjectives',
+  name: 'Learning objectives',
+  category: 'Argue',
+  whenToUse:
+    'What the audience will be able to do after. Use to open a lesson.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    items: z.array(short(120)).min(1).max(6),
+  }),
+};
+
 /** 首批全部模板（注册表数据源）。 */
 export const SLIDE_TEMPLATES: SlideTemplate[] = [
+  exercise,
+  quadrant,
+  comparisonMatrix,
+  recipe,
+  phaseStrip,
+  riskRegister,
+  quiz,
+  reflection,
+  statusUpdate,
+  okr,
+  decisionMatrix,
+  raci,
+  socialProof,
+  learningObjectives,
   author,
   toc,
   anecdote,
