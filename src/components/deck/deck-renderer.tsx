@@ -16,7 +16,7 @@ export interface RenderBrand {
  * 把品牌 palette 注入为 CSS 变量，覆盖默认青绿主题（白标换肤）。
  * 仅注入存在的键；未提供则用 deckgene 默认主题。
  */
-function brandStyle(brand?: RenderBrand | null): React.CSSProperties {
+export function brandStyle(brand?: RenderBrand | null): React.CSSProperties {
   const p = brand?.palette ?? {};
   const t = brand?.typography ?? {};
   const style: Record<string, string> = {};

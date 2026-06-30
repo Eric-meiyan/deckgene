@@ -1,19 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { ChevronLeft, ChevronRight, Grid2x2, Maximize, X } from 'lucide-react';
 
 import { useRouter } from '@/core/i18n/navigation';
 import { apiGet } from '@/lib/api-client';
-import { cn } from '@/lib/utils';
-import { m } from '@/paraglide/messages.js';
-import { renderSlide } from '@/components/deck/slides';
+import { DeckPlayer } from '@/components/deck/deck-player';
+import { brandStyle } from '@/components/deck/deck-renderer';
 
 interface SlideDTO {
   id: string;
   slide_type: string;
   content: Record<string, unknown>;
-  notes?: string | null;
 }
 interface DeckDTO {
   id: string;
@@ -28,40 +24,9 @@ interface BrandDTO {
   logo_url: string | null;
 }
 
-function brandStyle(brand?: BrandDTO | null): React.CSSProperties {
-  const palette = brand?.palette;
-  const t = brand?.typography;
-  const s: Record<string, string> = {};
-  if (palette?.primary) {
-    s['--primary'] = palette.primary;
-    s['--brand-to'] = palette.primary;
-    s['--brand-from'] = palette.secondary || palette.accent || palette.primary;
-  }
-  if (palette?.background) s['--background'] = palette.background;
-  if (palette?.text) s['--foreground'] = palette.text;
-  if (t?.body_font) s['--body-font'] = t.body_font;
-  if (t?.heading_font) s['--heading-font'] = t.heading_font;
-  if (brand?.logo_url) s['--brand-logo'] = `url("${brand.logo_url}")`;
-  return s as React.CSSProperties;
-}
-
-function pad(n: number) {
-  return String(n).padStart(2, '0');
-}
-
 function PresentPage() {
   const { id } = Route.useParams();
   const router = useRouter();
-  const rootRef = useRef<HTMLDivElement>(null);
-  const [i, setI] = useState(0);
-  const [overview, setOverview] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
-
-  const toggleFullscreen = useCallback(() => {
-    if (document.fullscreenElement) document.exitFullscreen?.();
-    else rootRef.current?.requestFullscreen?.();
-  }, []);
-
   const deckQ = useQuery({
     queryKey: ['deck', id],
     queryFn: () => apiGet<DeckDTO>(`/api/decks/${id}`),
@@ -72,152 +37,16 @@ function PresentPage() {
   });
 
   const deck = deckQ.data;
-  const slides = deck?.slides ?? [];
-  const total = slides.length;
   const brand = brandsQ.data?.find((b) => b.id === deck?.brand_id) ?? null;
 
-  const next = useCallback(
-    () => setI((v) => Math.min(total - 1, v + 1)),
-    [total]
-  );
-  const prev = useCallback(() => setI((v) => Math.max(0, v - 1)), []);
-  const exit = useCallback(
-    () => router.push(`/settings/decks/${id}`),
-    [id, router]
-  );
-
-  // 计时器
-  useEffect(() => {
-    const t = setInterval(() => setElapsed((e) => e + 1), 1000);
-    return () => clearInterval(t);
-  }, []);
-
-  // 进入时尝试自动全屏（部分浏览器需用户手势，失败则静默）
-  useEffect(() => {
-    rootRef.current?.requestFullscreen?.().catch(() => {});
-  }, []);
-
-  // 键盘导航
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'ArrowRight' || e.key === ' ') {
-        e.preventDefault();
-        next();
-      } else if (e.key === 'ArrowLeft') {
-        prev();
-      } else if (e.key === 'g' || e.key === 'G') {
-        setOverview((o) => !o);
-      } else if (e.key === 'f' || e.key === 'F') {
-        toggleFullscreen();
-      } else if (e.key === 'Escape') {
-        if (overview) setOverview(false);
-        else if (document.fullscreenElement) document.exitFullscreen?.();
-        else exit();
-      }
-    }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [next, prev, exit, overview, toggleFullscreen]);
-
-  const style = brandStyle(brand);
-
+  if (!deck) return <div className="py-12 text-center">…</div>;
   return (
-    <div
-      ref={rootRef}
-      className="fixed inset-0 z-50 flex flex-col bg-black text-neutral-300"
-    >
-      {/* 顶栏 */}
-      <div className="flex items-center justify-between px-4 py-2 text-sm">
-        <div className="flex items-center gap-3">
-          <span className="font-medium text-white">{deck?.title ?? '…'}</span>
-          <span className="text-neutral-500">
-            {pad(i + 1)} / {pad(total || 1)}
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-neutral-500 tabular-nums">
-            {pad(Math.floor(elapsed / 60))}:{pad(elapsed % 60)}
-          </span>
-          <button
-            onClick={() => setOverview((o) => !o)}
-            className="text-neutral-400 hover:text-white"
-            aria-label="overview"
-          >
-            <Grid2x2 className="size-4" />
-          </button>
-          <button
-            onClick={toggleFullscreen}
-            className="text-neutral-400 hover:text-white"
-            aria-label="fullscreen"
-          >
-            <Maximize className="size-4" />
-          </button>
-          <button
-            onClick={exit}
-            className="text-neutral-400 hover:text-white"
-            aria-label="exit"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* 主体 */}
-      {overview ? (
-        <div
-          className="deck-fonts grid flex-1 grid-cols-2 gap-4 overflow-auto p-6 sm:grid-cols-3 lg:grid-cols-4"
-          style={style}
-        >
-          {slides.map((s, idx) => (
-            <button
-              key={s.id}
-              onClick={() => {
-                setI(idx);
-                setOverview(false);
-              }}
-              className={cn(
-                'overflow-hidden rounded-lg border border-neutral-800 text-left transition',
-                idx === i ? 'ring-primary ring-2' : 'hover:border-neutral-600'
-              )}
-            >
-              <div className="pointer-events-none origin-top-left">
-                {renderSlide(s.slide_type, s.content)}
-              </div>
-            </button>
-          ))}
-        </div>
-      ) : (
-        // 纯净演示：只显示当前幻灯片，居中放大
-        <div className="flex flex-1 items-center justify-center overflow-hidden px-6 pb-2">
-          <div className="deck-fonts w-full max-w-6xl" style={style}>
-            {slides[i] && renderSlide(slides[i].slide_type, slides[i].content)}
-          </div>
-        </div>
-      )}
-
-      {/* 底部翻页 */}
-      {!overview && (
-        <div className="flex items-center justify-center gap-3 py-3">
-          <button
-            onClick={prev}
-            disabled={i === 0}
-            className="text-neutral-400 hover:text-white disabled:opacity-30"
-          >
-            <ChevronLeft className="size-5" />
-          </button>
-          <span className="text-sm text-neutral-500 tabular-nums">
-            {i + 1} / {total || 1}
-          </span>
-          <button
-            onClick={next}
-            disabled={i >= total - 1}
-            className="text-neutral-400 hover:text-white disabled:opacity-30"
-          >
-            <ChevronRight className="size-5" />
-          </button>
-        </div>
-      )}
-    </div>
+    <DeckPlayer
+      title={deck.title}
+      slides={deck.slides}
+      style={brandStyle(brand)}
+      onExit={() => router.push(`/settings/decks/${id}`)}
+    />
   );
 }
 
