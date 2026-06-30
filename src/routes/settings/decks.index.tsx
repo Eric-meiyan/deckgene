@@ -190,6 +190,14 @@ function DecksPage() {
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-2">
+                <Link
+                  href={`/present/${d.id}`}
+                  className={cn(
+                    buttonVariants({ variant: 'outline', size: 'sm' })
+                  )}
+                >
+                  {m['settings.deck_editor.present']()}
+                </Link>
                 {d.url && (
                   <a
                     href={d.url}
