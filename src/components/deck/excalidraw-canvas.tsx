@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Excalidraw, exportToBlob } from '@excalidraw/excalidraw';
+import { Excalidraw, exportToBlob, exportToSvg } from '@excalidraw/excalidraw';
 
 import '@excalidraw/excalidraw/index.css';
 
@@ -21,7 +21,7 @@ export default function ExcalidrawCanvas({
   onClose,
 }: {
   initial?: Scene | null;
-  onSave: (data: { scene: Scene; png: string }) => void;
+  onSave: (data: { scene: Scene; png: string; svg: string }) => void;
   onClose: () => void;
 }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -36,23 +36,34 @@ export default function ExcalidrawCanvas({
       const elements = api.getSceneElements();
       const appState = api.getAppState();
       const files = api.getFiles();
-      // 只导出 PNG(展示/导出用);限定 scale=1 避免 2x 放大体积
-      const blob = await exportToBlob({
+      // SVG：网页矢量显示（保留插入图片原始分辨率 + 文字矢量，永不糊）
+      const svgEl = await exportToSvg({
         elements,
-        // 2x 导出更清晰（PNG 走 R2，不进数据库，体积无碍）
+        appState: { ...appState, exportBackground: true },
+        files,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
+      const svgStr = new XMLSerializer().serializeToString(svgEl);
+      const svgBlob = new Blob([svgStr], { type: 'image/svg+xml' });
+      // PNG：PPTX 导出用（pptxgenjs 嵌不了 SVG），2x 清晰
+      const pngBlob = await exportToBlob({
+        elements,
         appState: { ...appState, exportBackground: true, exportScale: 2 },
         files,
         mimeType: 'image/png',
       });
-      // 上传 PNG 到 R2，content 里只存 URL（不再背 base64）
-      const png = await uploadAsset(blob, 'png');
+      // 两张都上传 R2，content 里只存 URL（不再背 base64）
+      const [svg, png] = await Promise.all([
+        uploadAsset(svgBlob, 'svg'),
+        uploadAsset(pngBlob, 'png'),
+      ]);
       // 只存可序列化的部分（去掉 collaborators 等非序列化字段）
       const scene: Scene = {
         elements,
         files,
         appState: { viewBackgroundColor: appState.viewBackgroundColor },
       };
-      onSave({ scene, png });
+      onSave({ scene, png, svg });
     } finally {
       setSaving(false);
     }

@@ -2293,11 +2293,13 @@ function UserFlowSlide({ c }: { c: Content }) {
 }
 
 function CanvasSlide({ c }: { c: Content }) {
+  // 优先用 SVG（矢量，永不糊）；老画布页回退 PNG
+  const src = (c.svg as string) || (c.png as string);
   return (
     <Surface variant={c.variant} className="items-center justify-center">
-      {c.png ? (
+      {src ? (
         <img
-          src={c.png}
+          src={src}
           alt=""
           className="max-h-full max-w-full object-contain"
         />
