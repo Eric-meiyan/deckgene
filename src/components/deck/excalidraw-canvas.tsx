@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Excalidraw, exportToBlob, exportToSvg } from '@excalidraw/excalidraw';
+import { Excalidraw, exportToBlob } from '@excalidraw/excalidraw';
 
 import '@excalidraw/excalidraw/index.css';
 
@@ -29,7 +29,7 @@ export default function ExcalidrawCanvas({
   onClose,
 }: {
   initial?: Scene | null;
-  onSave: (data: { scene: Scene; svg: string; png: string }) => void;
+  onSave: (data: { scene: Scene; png: string }) => void;
   onClose: () => void;
 }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -44,16 +44,10 @@ export default function ExcalidrawCanvas({
       const elements = api.getSceneElements();
       const appState = api.getAppState();
       const files = api.getFiles();
-      const exportState = { ...appState, exportBackground: true };
-      const svgEl = await exportToSvg({
-        elements,
-        appState: exportState,
-        files,
-      });
-      const svg = svgEl.outerHTML;
+      // 只导出 PNG(展示/导出用);限定 scale=1 避免 2x 放大体积
       const blob = await exportToBlob({
         elements,
-        appState: exportState,
+        appState: { ...appState, exportBackground: true, exportScale: 1 },
         files,
         mimeType: 'image/png',
       });
@@ -64,7 +58,7 @@ export default function ExcalidrawCanvas({
         files,
         appState: { viewBackgroundColor: appState.viewBackgroundColor },
       };
-      onSave({ scene, svg, png });
+      onSave({ scene, png });
     } finally {
       setSaving(false);
     }

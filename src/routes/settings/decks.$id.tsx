@@ -226,15 +226,13 @@ function SlideEditor({
                   onClose={() => setCanvasOpen(false)}
                   onSave={({
                     scene,
-                    svg,
                     png,
                   }: {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     scene: any;
-                    svg: string;
                     png: string;
                   }) => {
-                    const nc = { ...content, scene, svg, png };
+                    const nc = { ...content, scene, png };
                     setContent(nc);
                     setJsonDraft(JSON.stringify({ scene: '…' }, null, 2));
                     save.mutate(nc);
