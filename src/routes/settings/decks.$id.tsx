@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import {
@@ -46,6 +46,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+
+// 仅客户端懒加载。SSR 构建用 import.meta.env.SSR=true 把动态 import 作为死代码消除，
+// 避免 4.7MB 的 Excalidraw 进入 Workers 服务端包（免费档 3MiB 上限）。
+const ExcalidrawCanvas = lazy(
+  () =>
+    (import.meta.env.SSR
+      ? Promise.resolve({ default: () => null })
+      : import('@/components/deck/excalidraw-canvas')) as Promise<{
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      default: React.ComponentType<any>;
+    }>
+);
 
 interface SlideDTO {
   id: string;
@@ -114,6 +126,8 @@ function SlideEditor({
   );
   const [instruction, setInstruction] = useState('');
   const [showJson, setShowJson] = useState(false);
+  const [canvasOpen, setCanvasOpen] = useState(false);
+  const isCanvas = slide.slide_type === 'canvas';
   const [jsonDraft, setJsonDraft] = useState(() =>
     JSON.stringify(slide.content, null, 2)
   );
@@ -125,8 +139,10 @@ function SlideEditor({
   }
 
   const save = useMutation({
-    mutationFn: () =>
-      apiPatch(`/api/decks/${deckId}/slides/${slide.id}`, { content }),
+    mutationFn: (cnt?: Record<string, unknown>) =>
+      apiPatch(`/api/decks/${deckId}/slides/${slide.id}`, {
+        content: cnt ?? content,
+      }),
     onSuccess: () => {
       toast.success(m['settings.deck_editor.saved']());
       qc.invalidateQueries({ queryKey: ['deck', deckId] });
@@ -192,37 +208,81 @@ function SlideEditor({
           {renderSlide(slide.slide_type, content)}
         </div>
 
-        {/* 单页 AI 改写 */}
-        <div className="flex items-center gap-2">
-          <Input
-            placeholder={m['settings.deck_editor.ai_iterate_ph']()}
-            value={instruction}
-            onChange={(e) => setInstruction(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && instruction.trim() && !iterate.isPending)
-                iterate.mutate();
-            }}
-          />
-          <Button
-            size="sm"
-            variant="secondary"
-            className="shrink-0 gap-1"
-            disabled={!instruction.trim() || iterate.isPending}
-            onClick={() => iterate.mutate()}
-          >
-            <Sparkles className="size-4" />
-            {iterate.isPending
-              ? m['settings.deck_editor.ai_iterating']()
-              : m['settings.deck_editor.ai_iterate_btn']()}
-          </Button>
-        </div>
+        {isCanvas ? (
+          /* 画布页：编辑画布按钮（全屏 Excalidraw） */
+          <>
+            <Button
+              variant="secondary"
+              className="gap-1"
+              onClick={() => setCanvasOpen(true)}
+            >
+              {m['settings.deck_editor.edit_canvas']()}
+            </Button>
+            {canvasOpen && (
+              <Suspense fallback={null}>
+                <ExcalidrawCanvas
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  initial={(content.scene as any) ?? null}
+                  onClose={() => setCanvasOpen(false)}
+                  onSave={({
+                    scene,
+                    svg,
+                    png,
+                  }: {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    scene: any;
+                    svg: string;
+                    png: string;
+                  }) => {
+                    const nc = { ...content, scene, svg, png };
+                    setContent(nc);
+                    setJsonDraft(JSON.stringify({ scene: '…' }, null, 2));
+                    save.mutate(nc);
+                    setCanvasOpen(false);
+                  }}
+                />
+              </Suspense>
+            )}
+          </>
+        ) : (
+          <>
+            {/* 单页 AI 改写 */}
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder={m['settings.deck_editor.ai_iterate_ph']()}
+                value={instruction}
+                onChange={(e) => setInstruction(e.target.value)}
+                onKeyDown={(e) => {
+                  if (
+                    e.key === 'Enter' &&
+                    instruction.trim() &&
+                    !iterate.isPending
+                  )
+                    iterate.mutate();
+                }}
+              />
+              <Button
+                size="sm"
+                variant="secondary"
+                className="shrink-0 gap-1"
+                disabled={!instruction.trim() || iterate.isPending}
+                onClick={() => iterate.mutate()}
+              >
+                <Sparkles className="size-4" />
+                {iterate.isPending
+                  ? m['settings.deck_editor.ai_iterating']()
+                  : m['settings.deck_editor.ai_iterate_btn']()}
+              </Button>
+            </div>
 
-        {/* 表单式编辑 */}
-        <SlideForm
-          slideType={slide.slide_type}
-          content={content}
-          onChange={setContent}
-        />
+            {/* 表单式编辑 */}
+            <SlideForm
+              slideType={slide.slide_type}
+              content={content}
+              onChange={setContent}
+            />
+          </>
+        )}
 
         {/* 高级：原始 JSON */}
         <div>
@@ -271,7 +331,7 @@ function SlideEditor({
           <Button
             size="sm"
             disabled={save.isPending}
-            onClick={() => save.mutate()}
+            onClick={() => save.mutate(undefined)}
           >
             {m['settings.deck_editor.save']()}
           </Button>

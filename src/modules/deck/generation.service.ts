@@ -67,6 +67,7 @@ export async function planDeck(
   opts: { title?: string } & GenOptions = {}
 ): Promise<DeckPlan> {
   const catalog = listSlideTemplatesCompact()
+    .filter((t) => t.key !== 'canvas') // 手绘画布不参与 AI 自动选页
     .map((t) => `- ${t.key} [${t.category}]: ${t.whenToUse}`)
     .join('\n');
 

@@ -2292,7 +2292,26 @@ function UserFlowSlide({ c }: { c: Content }) {
   );
 }
 
+function CanvasSlide({ c }: { c: Content }) {
+  return (
+    <Surface variant={c.variant} className="items-center justify-center">
+      {c.png ? (
+        <img
+          src={c.png}
+          alt=""
+          className="max-h-full max-w-full object-contain"
+        />
+      ) : (
+        <p className={cn('text-center text-sm', mutedClass(c.variant))}>
+          Canvas
+        </p>
+      )}
+    </Surface>
+  );
+}
+
 const RENDERERS: Record<string, (c: Content) => React.ReactNode> = {
+  canvas: (c) => <CanvasSlide c={c} />,
   embed: (c) => <EmbedSlide c={c} />,
   storyboard: (c) => <StoryboardSlide c={c} />,
   funnel: (c) => <FunnelSlide c={c} />,

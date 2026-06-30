@@ -1453,8 +1453,25 @@ const userFlow: SlideTemplate = {
   }),
 };
 
+// ════════ 自由画布（Excalidraw）════════
+const canvas: SlideTemplate = {
+  key: 'canvas',
+  name: 'Canvas (draw)',
+  category: 'Show',
+  whenToUse:
+    'A free-form hand-drawn canvas (diagrams, sketches, flows). Draw anything on a blank slide.',
+  schema: z.object({
+    variant: surface,
+    // 自由格式：场景 JSON(可再编辑) + 导出图(展示/导出用)
+    scene: z.any().optional(),
+    svg: z.string().optional(),
+    png: z.string().optional(),
+  }),
+};
+
 /** 首批全部模板（注册表数据源）。 */
 export const SLIDE_TEMPLATES: SlideTemplate[] = [
+  canvas,
   embed,
   storyboard,
   funnel,

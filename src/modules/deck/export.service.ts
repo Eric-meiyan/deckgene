@@ -175,11 +175,24 @@ export async function deckToPptx(
 
   for (const sl of deck.slides) {
     const c = (sl.content ?? {}) as Record<string, unknown>;
-    const { title, body } = toLines(sl.slideType, c);
     const sf = surface(c.variant as string | undefined);
     const slide = pptx.addSlide();
     slide.background = { color: sf.bg };
 
+    // 画布页：整页嵌 PNG
+    if (sl.slideType === 'canvas' && typeof c.png === 'string') {
+      slide.addImage({
+        data: c.png,
+        x: 0.4,
+        y: 0.4,
+        w: 12.5,
+        h: 6.7,
+        sizing: { type: 'contain', w: 12.5, h: 6.7 },
+      });
+      continue;
+    }
+
+    const { title, body } = toLines(sl.slideType, c);
     let y = 0.5;
     if (title) {
       slide.addText(title, {

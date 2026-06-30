@@ -947,5 +947,8 @@
   "settings.brands.remove": "Remove",
   "settings.brands.logo_hint": "SVG/PNG, ≤200KB. Shown top-right of every slide.",
   "settings.brands.logo_too_big": "Logo must be ≤200KB",
-  "settings.deck_editor.insert_below": "Insert below"
+  "settings.deck_editor.insert_below": "Insert below",
+  "settings.deck_editor.edit_canvas": "Edit canvas",
+  "settings.deck_editor.canvas_close": "Close",
+  "settings.deck_editor.canvas_empty": "Empty canvas — click Edit canvas to draw."
 }
