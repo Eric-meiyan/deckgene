@@ -505,45 +505,76 @@ function SlidePicker({
           t.whenToUse.toLowerCase().includes(s)
       )
     : all;
+  const [sel, setSel] = useState(all[0]?.key ?? '');
+  // 当前选中（搜索后若选中项不在结果里，回退到首个结果）
+  const current = list.find((t) => t.key === sel) ?? list[0];
 
   return (
-    <div className="flex max-h-[72vh] flex-col gap-4">
-      <Input
-        placeholder={m['settings.library.search']()}
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
-      <div className="-mr-2 space-y-6 overflow-auto pr-2">
-        {cats.map(([cat, zhL, enL]) => {
-          const items = list.filter((t) => t.category === cat);
-          if (!items.length) return null;
-          return (
-            <div key={cat} className="space-y-3">
-              <p className="text-muted-foreground text-sm font-semibold">
-                {zh ? zhL : enL}
-              </p>
-              <div className="grid gap-4 sm:grid-cols-2">
+    <div className="flex h-[74vh] gap-4">
+      {/* 左：紧凑列表 */}
+      <div className="flex w-56 shrink-0 flex-col gap-2">
+        <Input
+          placeholder={m['settings.library.search']()}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        <div className="-mr-1 space-y-3 overflow-auto pr-1">
+          {cats.map(([cat, zhL, enL]) => {
+            const items = list.filter((t) => t.category === cat);
+            if (!items.length) return null;
+            return (
+              <div key={cat}>
+                <p className="text-muted-foreground mb-1 text-xs font-semibold">
+                  {zh ? zhL : enL}
+                </p>
                 {items.map((t) => (
                   <button
                     key={t.key}
-                    disabled={pending}
-                    onClick={() => onPick(t.key)}
-                    className="hover:border-primary group rounded-xl border p-2 text-left transition disabled:opacity-50"
+                    onMouseEnter={() => setSel(t.key)}
+                    onClick={() => setSel(t.key)}
+                    onDoubleClick={() => !pending && onPick(t.key)}
+                    className={cn(
+                      'block w-full rounded-md px-2 py-1.5 text-left text-sm transition',
+                      current?.key === t.key
+                        ? 'bg-primary text-primary-foreground'
+                        : 'hover:bg-muted'
+                    )}
                   >
-                    <div className="pointer-events-none overflow-hidden rounded-lg border">
-                      {renderSlide(t.key, sampleSlideContent(t.key))}
-                    </div>
-                    <p className="mt-2 font-medium">{t.name}</p>
-                    <p className="text-muted-foreground line-clamp-1 text-xs">
-                      {t.whenToUse}
-                    </p>
+                    {t.name}
                   </button>
                 ))}
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
+
+      {/* 右：大预览 */}
+      {current && (
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="bg-muted/30 flex flex-1 items-center justify-center overflow-auto rounded-xl border p-4">
+            <div className="w-full">
+              {renderSlide(current.key, sampleSlideContent(current.key))}
+            </div>
+          </div>
+          <div className="mt-3 flex items-end justify-between gap-4">
+            <div className="min-w-0">
+              <p className="font-semibold">{current.name}</p>
+              <p className="text-muted-foreground text-xs">
+                {current.whenToUse}
+              </p>
+            </div>
+            <Button
+              className="shrink-0 gap-1"
+              disabled={pending}
+              onClick={() => onPick(current.key)}
+            >
+              <Plus className="size-4" />
+              {m['settings.deck_editor.add']()}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
