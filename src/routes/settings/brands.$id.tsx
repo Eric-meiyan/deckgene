@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Link } from '@/core/i18n/navigation';
 import { apiGet, apiPatch } from '@/lib/api-client';
 import { BRAND_FONTS } from '@/lib/fonts';
+import { uploadAsset } from '@/lib/upload-asset';
 import { m } from '@/paraglide/messages.js';
 import { sampleSlideContent } from '@/components/deck/slide-form';
 import { renderSlide } from '@/components/deck/slides';
@@ -130,16 +131,24 @@ function BrandEditor({ brand }: { brand: BrandDTO }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  function handleLogo(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleLogo(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (f.size > 200 * 1024) {
+    if (f.size > 2 * 1024 * 1024) {
       toast.error(m['settings.brands.logo_too_big']());
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => setLogo(String(reader.result));
-    reader.readAsDataURL(f);
+    try {
+      const ext = f.type.includes('svg')
+        ? 'svg'
+        : f.type.includes('png')
+          ? 'png'
+          : 'jpg';
+      const url = await uploadAsset(f, ext);
+      setLogo(url);
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
   }
 
   const style = brandStyle(palette, headingFont, bodyFont, logo);

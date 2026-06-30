@@ -3,6 +3,7 @@ import { Excalidraw, exportToBlob } from '@excalidraw/excalidraw';
 
 import '@excalidraw/excalidraw/index.css';
 
+import { uploadAsset } from '@/lib/upload-asset';
 import { m } from '@/paraglide/messages.js';
 import { Button } from '@/components/ui/button';
 
@@ -13,15 +14,6 @@ import { Button } from '@/components/ui/button';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Scene = { elements?: any[]; appState?: any; files?: any };
-
-function blobToDataURL(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(String(r.result));
-    r.onerror = reject;
-    r.readAsDataURL(blob);
-  });
-}
 
 export default function ExcalidrawCanvas({
   initial,
@@ -51,7 +43,8 @@ export default function ExcalidrawCanvas({
         files,
         mimeType: 'image/png',
       });
-      const png = await blobToDataURL(blob);
+      // 上传 PNG 到 R2，content 里只存 URL（不再背 base64）
+      const png = await uploadAsset(blob, 'png');
       // 只存可序列化的部分（去掉 collaborators 等非序列化字段）
       const scene: Scene = {
         elements,
