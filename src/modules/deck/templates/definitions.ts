@@ -862,8 +862,306 @@ const learningObjectives: SlideTemplate = {
   }),
 };
 
+// ════════ 批次 3：Show 前 18 ════════
+const roadmap: SlideTemplate = {
+  key: 'roadmap',
+  name: 'Roadmap',
+  category: 'Show',
+  whenToUse: 'Dated milestones along a path. Use to show what ships when.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    milestones: z
+      .array(
+        z.object({
+          date: short(24),
+          title: short(60),
+          detail: short(120).optional(),
+        })
+      )
+      .min(2)
+      .max(6),
+  }),
+};
+const services: SlideTemplate = {
+  key: 'services',
+  name: 'Service grid',
+  category: 'Show',
+  whenToUse: 'A set of offerings or capabilities as cards.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    items: z
+      .array(z.object({ title: short(40), detail: long(120).optional() }))
+      .min(2)
+      .max(6),
+  }),
+};
+const pricing: SlideTemplate = {
+  key: 'pricing',
+  name: 'Pricing',
+  category: 'Show',
+  whenToUse: 'Pricing tiers with features and prices.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    tiers: z
+      .array(
+        z.object({
+          name: short(40),
+          price: short(24),
+          features: long(200).optional(),
+        })
+      )
+      .min(2)
+      .max(4),
+  }),
+};
+const team: SlideTemplate = {
+  key: 'team',
+  name: 'Team grid',
+  category: 'Show',
+  whenToUse: 'The people, with photos, names, and roles.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    members: z
+      .array(
+        z.object({
+          name: short(40),
+          role: short(60).optional(),
+          avatarUrl: urlOpt(),
+        })
+      )
+      .min(1)
+      .max(8),
+  }),
+};
+const logos: SlideTemplate = {
+  key: 'logos',
+  name: 'Client logos',
+  category: 'Show',
+  whenToUse: 'A wall of customer or partner logos.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    logos: z.array(short(40)).min(2).max(12),
+  }),
+};
+const techStack: SlideTemplate = {
+  key: 'techStack',
+  name: 'Tech stack',
+  category: 'Show',
+  whenToUse: 'The technologies in use, grouped.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    groups: z
+      .array(z.object({ category: short(40), tools: short(160) }))
+      .min(1)
+      .max(6),
+  }),
+};
+const integrations: SlideTemplate = {
+  key: 'integrations',
+  name: 'Integrations',
+  category: 'Show',
+  whenToUse: 'What the product connects to. Show your integration ecosystem.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    items: z.array(short(40)).min(2).max(12),
+  }),
+};
+const productShowcase: SlideTemplate = {
+  key: 'productShowcase',
+  name: 'Product showcase',
+  category: 'Show',
+  whenToUse: 'Product screenshots with captions.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    items: z
+      .array(z.object({ imageUrl: urlOpt(), caption: short(80).optional() }))
+      .min(1)
+      .max(4),
+  }),
+};
+const releaseNotes: SlideTemplate = {
+  key: 'releaseNotes',
+  name: 'Release notes',
+  category: 'Show',
+  whenToUse: 'What shipped in a release. Use for a changelog.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    version: short(24).optional(),
+    items: z
+      .array(
+        z.object({
+          kind: z.enum(['new', 'fix', 'improve']).optional().catch(undefined),
+          text: short(120),
+        })
+      )
+      .min(1)
+      .max(8),
+  }),
+};
+const codeBlock: SlideTemplate = {
+  key: 'codeBlock',
+  name: 'Code block',
+  category: 'Show',
+  whenToUse: 'A real code snippet with syntax. Use for developer content.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    language: short(24).optional(),
+    code: long(900),
+  }),
+};
+const terminal: SlideTemplate = {
+  key: 'terminal',
+  name: 'Terminal',
+  category: 'Show',
+  whenToUse: 'A command-line session. Show a CLI command and its output.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    command: short(160).optional(),
+    output: long(700).optional(),
+  }),
+};
+const diff: SlideTemplate = {
+  key: 'diff',
+  name: 'Code diff',
+  category: 'Show',
+  whenToUse: 'A before/after code or text diff. Show exactly what changed.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    before: long(600),
+    after: long(600),
+  }),
+};
+const financials: SlideTemplate = {
+  key: 'financials',
+  name: 'Financials',
+  category: 'Show',
+  whenToUse: 'A P&L or income statement. Revenue, cost, and margin lines.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    rows: z
+      .array(
+        z.object({
+          label: short(60),
+          value: short(24),
+          note: short(40).optional(),
+        })
+      )
+      .min(1)
+      .max(10),
+  }),
+};
+const revenueBreakdown: SlideTemplate = {
+  key: 'revenueBreakdown',
+  name: 'Revenue breakdown',
+  category: 'Show',
+  whenToUse: 'Revenue split by segment, product, or region.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    segments: z
+      .array(
+        z.object({
+          label: short(40),
+          value: short(24),
+          percent: z.number().optional(),
+        })
+      )
+      .min(1)
+      .max(8),
+  }),
+};
+const unitEconomics: SlideTemplate = {
+  key: 'unitEconomics',
+  name: 'Unit economics',
+  category: 'Show',
+  whenToUse: 'CAC, LTV, payback, and margins. Prove the model works per unit.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    metrics: z
+      .array(z.object({ label: short(40), value: short(24) }))
+      .min(2)
+      .max(6),
+  }),
+};
+const marketSizing: SlideTemplate = {
+  key: 'marketSizing',
+  name: 'Market sizing',
+  category: 'Show',
+  whenToUse: 'TAM, SAM, SOM. Use to size the market opportunity.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    tam: short(40),
+    sam: short(40),
+    som: short(40),
+    note: long(160).optional(),
+  }),
+};
+const npsScore: SlideTemplate = {
+  key: 'npsScore',
+  name: 'NPS score',
+  category: 'Show',
+  whenToUse: 'NPS or a satisfaction score with breakdown.',
+  schema: z.object({
+    variant: surface,
+    score: short(12),
+    promoters: short(12).optional(),
+    passives: short(12).optional(),
+    detractors: short(12).optional(),
+    note: long(120).optional(),
+  }),
+};
+const benchmark: SlideTemplate = {
+  key: 'benchmark',
+  name: 'Benchmark',
+  category: 'Show',
+  whenToUse: 'Your number against competitors or a baseline.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    items: z
+      .array(z.object({ label: short(40), value: z.number() }))
+      .min(2)
+      .max(8),
+    highlight: short(40).optional(),
+    unit: short(12).optional(),
+  }),
+};
+
 /** 首批全部模板（注册表数据源）。 */
 export const SLIDE_TEMPLATES: SlideTemplate[] = [
+  roadmap,
+  services,
+  pricing,
+  team,
+  logos,
+  techStack,
+  integrations,
+  productShowcase,
+  releaseNotes,
+  codeBlock,
+  terminal,
+  diff,
+  financials,
+  revenueBreakdown,
+  unitEconomics,
+  marketSizing,
+  npsScore,
+  benchmark,
   exercise,
   quadrant,
   comparisonMatrix,

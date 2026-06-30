@@ -1330,7 +1330,486 @@ function LearningObjectivesSlide({ c }: { c: Content }) {
   );
 }
 
+// ════════ 批次 3 渲染器（Show 前 18）════════
+
+function CardGrid({
+  variant,
+  heading,
+  cards,
+}: {
+  variant?: string;
+  heading?: string;
+  cards: { title: string; detail?: string }[];
+}) {
+  return (
+    <Surface variant={variant}>
+      <H>{heading}</H>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {cards.map((c, i) => (
+          <div
+            key={i}
+            className="border-border/40 bg-background/40 rounded-2xl border p-4"
+          >
+            <p className="font-semibold">{c.title}</p>
+            {c.detail && (
+              <p className={cn('mt-1 text-sm', mutedClass(variant))}>
+                {c.detail}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function Chips({
+  variant,
+  heading,
+  chips,
+}: {
+  variant?: string;
+  heading?: string;
+  chips: string[];
+}) {
+  return (
+    <Surface variant={variant}>
+      <H>{heading}</H>
+      <div className="flex flex-wrap gap-2.5">
+        {chips.map((x, i) => (
+          <span
+            key={i}
+            className="border-border/40 bg-background/40 rounded-lg border px-4 py-2 font-medium"
+          >
+            {x}
+          </span>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function CodeBox({ children }: { children: string }) {
+  return (
+    <pre className="overflow-auto rounded-xl bg-neutral-900 p-4 font-mono text-sm leading-relaxed text-neutral-100">
+      <code>{children}</code>
+    </pre>
+  );
+}
+
+function RoadmapSlide({ c }: { c: Content }) {
+  const ms: Content[] = c.milestones ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'Roadmap'}</H>
+      <div className="flex items-stretch gap-3">
+        {ms.map((m, i) => (
+          <div key={i} className="flex-1">
+            <div className={cn('text-sm font-bold', eyebrowClass(c.variant))}>
+              {m.date}
+            </div>
+            <div className="bg-primary/60 my-2 h-1 rounded-full" />
+            <p className="font-semibold">{m.title}</p>
+            {m.detail && (
+              <p className={cn('mt-1 text-sm', mutedClass(c.variant))}>
+                {m.detail}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function ServicesSlide({ c }: { c: Content }) {
+  return (
+    <CardGrid variant={c.variant} heading={c.heading} cards={c.items ?? []} />
+  );
+}
+function PricingSlide({ c }: { c: Content }) {
+  const tiers: Content[] = c.tiers ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'Pricing'}</H>
+      <div className="grid gap-4 sm:grid-cols-3">
+        {tiers.map((t, i) => (
+          <div
+            key={i}
+            className="border-border/40 bg-background/40 rounded-2xl border p-5"
+          >
+            <p className="font-semibold">{t.name}</p>
+            <p className="my-2 text-3xl font-bold">{t.price}</p>
+            {t.features && (
+              <ul className={cn('space-y-1 text-sm', mutedClass(c.variant))}>
+                {String(t.features)
+                  .split('\n')
+                  .filter(Boolean)
+                  .map((f: string, j: number) => (
+                    <li key={j}>• {f}</li>
+                  ))}
+              </ul>
+            )}
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function TeamSlide({ c }: { c: Content }) {
+  const members: Content[] = c.members ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'Team'}</H>
+      <div className="grid grid-cols-2 gap-5 sm:grid-cols-4">
+        {members.map((m, i) => (
+          <div key={i} className="text-center">
+            <div className="bg-primary/15 text-primary mx-auto flex size-16 items-center justify-center overflow-hidden rounded-full text-xl font-bold">
+              {m.avatarUrl ? (
+                <img
+                  src={m.avatarUrl}
+                  alt=""
+                  className="size-full object-cover"
+                />
+              ) : (
+                (m.name?.[0] ?? '?')
+              )}
+            </div>
+            <p className="mt-2 font-medium">{m.name}</p>
+            {m.role && (
+              <p className={cn('text-xs', mutedClass(c.variant))}>{m.role}</p>
+            )}
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function LogosSlide({ c }: { c: Content }) {
+  return (
+    <Chips variant={c.variant} heading={c.heading} chips={c.logos ?? []} />
+  );
+}
+function IntegrationsSlide({ c }: { c: Content }) {
+  return (
+    <Chips variant={c.variant} heading={c.heading} chips={c.items ?? []} />
+  );
+}
+function TechStackSlide({ c }: { c: Content }) {
+  const groups: Content[] = c.groups ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'Tech stack'}</H>
+      <div className="space-y-3">
+        {groups.map((g, i) => (
+          <div key={i} className="flex gap-3">
+            <span
+              className={cn(
+                'w-28 shrink-0 text-sm font-bold',
+                eyebrowClass(c.variant)
+              )}
+            >
+              {g.category}
+            </span>
+            <span>{g.tools}</span>
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function ProductShowcaseSlide({ c }: { c: Content }) {
+  const items: Content[] = c.items ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading}</H>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {items.map((it, i) => (
+          <div key={i}>
+            <div className="bg-muted aspect-video overflow-hidden rounded-xl">
+              {it.imageUrl && (
+                <img
+                  src={it.imageUrl}
+                  alt=""
+                  className="size-full object-cover"
+                />
+              )}
+            </div>
+            {it.caption && (
+              <p className={cn('mt-1 text-sm', mutedClass(c.variant))}>
+                {it.caption}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function ReleaseNotesSlide({ c }: { c: Content }) {
+  const items: Content[] = c.items ?? [];
+  const tag: Record<string, string> = {
+    new: 'bg-emerald-500/15 text-emerald-600',
+    fix: 'bg-red-500/15 text-red-600',
+    improve: 'bg-blue-500/15 text-blue-600',
+  };
+  return (
+    <Surface variant={c.variant}>
+      <div className="mb-4 flex items-center gap-3">
+        <H>{c.heading ?? 'Release notes'}</H>
+        {c.version && (
+          <span className="bg-primary/15 text-primary rounded-full px-3 py-0.5 text-xs font-semibold">
+            {c.version}
+          </span>
+        )}
+      </div>
+      <ul className="space-y-2">
+        {items.map((it, i) => (
+          <li key={i} className="flex items-start gap-2">
+            {it.kind && (
+              <span
+                className={cn(
+                  'rounded px-1.5 py-0.5 text-xs font-semibold',
+                  tag[it.kind] ?? 'bg-muted'
+                )}
+              >
+                {it.kind}
+              </span>
+            )}
+            <span>{it.text}</span>
+          </li>
+        ))}
+      </ul>
+    </Surface>
+  );
+}
+function CodeBlockSlide({ c }: { c: Content }) {
+  return (
+    <Surface variant={c.variant}>
+      {(c.heading || c.language) && (
+        <div className="mb-2 flex items-center justify-between">
+          <span className="font-semibold">{c.heading}</span>
+          {c.language && (
+            <span className={cn('text-xs', mutedClass(c.variant))}>
+              {c.language}
+            </span>
+          )}
+        </div>
+      )}
+      <CodeBox>{c.code ?? ''}</CodeBox>
+    </Surface>
+  );
+}
+function TerminalSlide({ c }: { c: Content }) {
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading}</H>
+      <CodeBox>
+        {(c.command ? `$ ${c.command}\n` : '') + (c.output ?? '')}
+      </CodeBox>
+    </Surface>
+  );
+}
+function DiffSlide({ c }: { c: Content }) {
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading}</H>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <pre className="overflow-auto rounded-xl border border-red-500/40 bg-red-500/10 p-3 font-mono text-xs">
+          <code>{c.before}</code>
+        </pre>
+        <pre className="overflow-auto rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-3 font-mono text-xs">
+          <code>{c.after}</code>
+        </pre>
+      </div>
+    </Surface>
+  );
+}
+function FinancialsSlide({ c }: { c: Content }) {
+  const rows: Content[] = c.rows ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'Financials'}</H>
+      <Tbl
+        head={['', 'Value', '']}
+        rows={rows.map((r) => [
+          r.label,
+          <span className="font-semibold">{r.value}</span>,
+          r.note,
+        ])}
+      />
+    </Surface>
+  );
+}
+function BarsSlide({
+  variant,
+  heading,
+  rows,
+  highlight,
+  unit,
+}: {
+  variant?: string;
+  heading?: string;
+  rows: { label: string; value: number; display?: string }[];
+  highlight?: string;
+  unit?: string;
+}) {
+  const max = Math.max(1, ...rows.map((r) => r.value || 0));
+  return (
+    <Surface variant={variant}>
+      <H>{heading}</H>
+      <div className="space-y-2.5">
+        {rows.map((r, i) => {
+          const hl = highlight && r.label === highlight;
+          return (
+            <div key={i} className="flex items-center gap-3">
+              <span className="w-28 shrink-0 truncate text-sm">{r.label}</span>
+              <div className="bg-muted h-5 flex-1 overflow-hidden rounded-full">
+                <div
+                  className={cn(
+                    'h-full rounded-full',
+                    hl ? 'bg-primary' : 'bg-primary/50'
+                  )}
+                  style={{ width: `${((r.value || 0) / max) * 100}%` }}
+                />
+              </div>
+              <span className="w-16 shrink-0 text-right text-sm font-semibold">
+                {r.display ?? r.value}
+                {unit}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </Surface>
+  );
+}
+function RevenueBreakdownSlide({ c }: { c: Content }) {
+  const segs: Content[] = c.segments ?? [];
+  return (
+    <BarsSlide
+      variant={c.variant}
+      heading={c.heading ?? 'Revenue'}
+      rows={segs.map((s) => ({
+        label: s.label,
+        value: typeof s.percent === 'number' ? s.percent : Number(s.value) || 0,
+        display: s.value,
+      }))}
+    />
+  );
+}
+function BenchmarkSlide({ c }: { c: Content }) {
+  return (
+    <BarsSlide
+      variant={c.variant}
+      heading={c.heading ?? 'Benchmark'}
+      rows={(c.items ?? []).map((it: Content) => ({
+        label: it.label,
+        value: it.value,
+      }))}
+      highlight={c.highlight}
+      unit={c.unit}
+    />
+  );
+}
+function UnitEconomicsSlide({ c }: { c: Content }) {
+  const metrics: Content[] = c.metrics ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'Unit economics'}</H>
+      <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
+        {metrics.map((m, i) => (
+          <div key={i}>
+            <div className="text-3xl font-bold sm:text-4xl">{m.value}</div>
+            <div className={cn('mt-1 text-sm', mutedClass(c.variant))}>
+              {m.label}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function MarketSizingSlide({ c }: { c: Content }) {
+  const layers = [
+    { k: 'TAM', v: c.tam, w: 'w-full' },
+    { k: 'SAM', v: c.sam, w: 'w-2/3' },
+    { k: 'SOM', v: c.som, w: 'w-1/3' },
+  ];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'Market size'}</H>
+      <div className="space-y-2">
+        {layers.map((l, i) => (
+          <div
+            key={i}
+            className={cn(
+              'bg-primary/15 flex items-center justify-between rounded-xl px-4 py-3',
+              l.w
+            )}
+          >
+            <span className={cn('font-bold', eyebrowClass(c.variant))}>
+              {l.k}
+            </span>
+            <span className="font-semibold">{l.v}</span>
+          </div>
+        ))}
+      </div>
+      {c.note && (
+        <p className={cn('mt-3 text-sm', mutedClass(c.variant))}>{c.note}</p>
+      )}
+    </Surface>
+  );
+}
+function NpsScoreSlide({ c }: { c: Content }) {
+  const parts = [
+    ['Promoters', c.promoters, 'text-emerald-600'],
+    ['Passives', c.passives, 'text-amber-600'],
+    ['Detractors', c.detractors, 'text-red-600'],
+  ].filter((p) => p[1]);
+  return (
+    <Surface variant={c.variant} className="items-center text-center">
+      <div className="text-7xl font-black sm:text-8xl">{c.score}</div>
+      <div className={cn('mt-1 text-lg font-medium', eyebrowClass(c.variant))}>
+        NPS
+      </div>
+      {parts.length > 0 && (
+        <div className="mt-6 flex gap-8">
+          {parts.map(([label, val, color], i) => (
+            <div key={i}>
+              <div className={cn('text-2xl font-bold', color as string)}>
+                {val as string}
+              </div>
+              <div className={cn('text-xs', mutedClass(c.variant))}>
+                {label}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {c.note && (
+        <p className={cn('mt-4 text-sm', mutedClass(c.variant))}>{c.note}</p>
+      )}
+    </Surface>
+  );
+}
+
 const RENDERERS: Record<string, (c: Content) => React.ReactNode> = {
+  roadmap: (c) => <RoadmapSlide c={c} />,
+  services: (c) => <ServicesSlide c={c} />,
+  pricing: (c) => <PricingSlide c={c} />,
+  team: (c) => <TeamSlide c={c} />,
+  logos: (c) => <LogosSlide c={c} />,
+  techStack: (c) => <TechStackSlide c={c} />,
+  integrations: (c) => <IntegrationsSlide c={c} />,
+  productShowcase: (c) => <ProductShowcaseSlide c={c} />,
+  releaseNotes: (c) => <ReleaseNotesSlide c={c} />,
+  codeBlock: (c) => <CodeBlockSlide c={c} />,
+  terminal: (c) => <TerminalSlide c={c} />,
+  diff: (c) => <DiffSlide c={c} />,
+  financials: (c) => <FinancialsSlide c={c} />,
+  revenueBreakdown: (c) => <RevenueBreakdownSlide c={c} />,
+  unitEconomics: (c) => <UnitEconomicsSlide c={c} />,
+  marketSizing: (c) => <MarketSizingSlide c={c} />,
+  npsScore: (c) => <NpsScoreSlide c={c} />,
+  benchmark: (c) => <BenchmarkSlide c={c} />,
   exercise: (c) => <ExerciseSlide c={c} />,
   quadrant: (c) => <QuadrantSlide c={c} />,
   comparisonMatrix: (c) => <ComparisonMatrixSlide c={c} />,
