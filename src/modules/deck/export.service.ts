@@ -11,6 +11,26 @@ const PptxGenJS: any = (PptxModule as any).default ?? PptxModule;
  * 把每页 typed content 映射为 PPT 文本。PDF 走 Cloudflare Browser Rendering（另见 export-pdf）。
  */
 
+/**
+ * 把 canvas 的 png 字段解析成 pptxgenjs 可用的 base64 data URL。
+ * - data: 开头：已是 base64，直接用（老画布页）。
+ * - /assets/{key}：从 R2 读字节转 base64（pptxgenjs 在 Workers 里取不了相对 URL）。
+ */
+async function resolvePngData(png: string): Promise<string | null> {
+  if (png.startsWith('data:')) return png;
+  if (png.startsWith('/assets/')) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const env = (globalThis as any).__CF_ENV__;
+    const obj = await env?.R2?.get(png.slice('/assets/'.length));
+    if (!obj) return null;
+    const buf = await obj.arrayBuffer();
+    const b64 = Buffer.from(buf).toString('base64');
+    const ct = obj.httpMetadata?.contentType || 'image/png';
+    return `data:${ct};base64,${b64}`;
+  }
+  return null;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toLines(slideType: string, c: any): { title: string; body: string[] } {
   const s = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : '');
@@ -179,16 +199,19 @@ export async function deckToPptx(
     const slide = pptx.addSlide();
     slide.background = { color: sf.bg };
 
-    // 画布页：整页嵌 PNG
+    // 画布页：整页嵌 PNG（c.png 可能是 R2 URL /assets/... 或老的 data URL）
     if (sl.slideType === 'canvas' && typeof c.png === 'string') {
-      slide.addImage({
-        data: c.png,
-        x: 0.4,
-        y: 0.4,
-        w: 12.5,
-        h: 6.7,
-        sizing: { type: 'contain', w: 12.5, h: 6.7 },
-      });
+      const data = await resolvePngData(c.png);
+      if (data) {
+        slide.addImage({
+          data,
+          x: 0.4,
+          y: 0.4,
+          w: 12.5,
+          h: 6.7,
+          sizing: { type: 'contain', w: 12.5, h: 6.7 },
+        });
+      }
       continue;
     }
 
