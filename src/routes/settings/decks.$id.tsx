@@ -20,14 +20,22 @@ import { GripVertical, Play, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Link } from '@/core/i18n/navigation';
+import { listSlideTemplates } from '@/modules/deck/templates/registry';
 import { apiDelete, apiGet, apiPatch, apiPost } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
-import { SlideForm } from '@/components/deck/slide-form';
+import { getLocale } from '@/paraglide/runtime.js';
+import { sampleSlideContent, SlideForm } from '@/components/deck/slide-form';
 import { renderSlide } from '@/components/deck/slides';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -52,11 +60,6 @@ interface DeckDTO {
   url: string | null;
   brand_id: string | null;
   slides: SlideDTO[];
-}
-interface TemplateDTO {
-  key: string;
-  name: string;
-  category: string;
 }
 interface BrandLite {
   id: string;
@@ -260,15 +263,12 @@ function DeckEditorPage() {
   const qc = useQueryClient();
   const sensors = useSensors(useSensor(PointerSensor));
   const [order, setOrder] = useState<string[]>([]);
-  const [addType, setAddType] = useState('');
+  const [addOpen, setAddOpen] = useState(false);
+  const [addQ, setAddQ] = useState('');
 
   const deckQ = useQuery({
     queryKey: ['deck', id],
     queryFn: () => apiGet<DeckDTO>(`/api/decks/${id}`),
-  });
-  const tplQ = useQuery({
-    queryKey: ['slide-templates'],
-    queryFn: () => apiGet<TemplateDTO[]>('/api/slide-templates'),
   });
   const brandsQ = useQuery({
     queryKey: ['brands'],
@@ -291,10 +291,13 @@ function DeckEditorPage() {
     onError: (e: Error) => toast.error(e.message),
   });
   const addSlide = useMutation({
-    mutationFn: () =>
-      apiPost(`/api/decks/${id}/slides`, { slide_type: addType, content: {} }),
+    mutationFn: (slideType: string) =>
+      apiPost(`/api/decks/${id}/slides`, {
+        slide_type: slideType,
+        content: {},
+      }),
     onSuccess: () => {
-      setAddType('');
+      setAddOpen(false);
       qc.invalidateQueries({ queryKey: ['deck', id] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -447,34 +450,99 @@ function DeckEditorPage() {
         </SortableContext>
       </DndContext>
 
-      {/* 新增页 */}
-      <div className="flex items-center gap-2">
-        <Select value={addType} onValueChange={(v) => setAddType(v ?? '')}>
-          <SelectTrigger className="w-64">
-            <SelectValue placeholder="slide_type">
-              {(val: unknown) => {
-                const t = tplQ.data?.find((x) => x.key === val);
-                return t ? `${t.name} (${t.category})` : 'slide_type';
-              }}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {tplQ.data?.map((t) => (
-              <SelectItem key={t.key} value={t.key}>
-                {t.name} ({t.category})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button
-          variant="outline"
-          className="gap-1"
-          disabled={!addType || addSlide.isPending}
-          onClick={() => addSlide.mutate()}
-        >
-          <Plus className="size-4" />
-          {m['settings.deck_editor.add']()}
-        </Button>
+      {/* 新增页：缩略图挑选器 */}
+      <Button
+        variant="outline"
+        className="gap-1"
+        onClick={() => setAddOpen(true)}
+      >
+        <Plus className="size-4" />
+        {m['settings.deck_editor.add']()}
+      </Button>
+
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent className="max-h-[88vh] max-w-5xl overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>{m['settings.deck_editor.add']()}</DialogTitle>
+          </DialogHeader>
+          <SlidePicker
+            query={addQ}
+            setQuery={setAddQ}
+            pending={addSlide.isPending}
+            onPick={(key) => addSlide.mutate(key)}
+          />
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function SlidePicker({
+  query,
+  setQuery,
+  pending,
+  onPick,
+}: {
+  query: string;
+  setQuery: (v: string) => void;
+  pending: boolean;
+  onPick: (key: string) => void;
+}) {
+  const zh = getLocale() === 'zh';
+  const cats: [string, string, string][] = [
+    ['Open', '开场', 'Open'],
+    ['Argue', '论证', 'Argue'],
+    ['Show', '展示', 'Show'],
+    ['Close', '收尾', 'Close'],
+  ];
+  const all = listSlideTemplates();
+  const s = query.trim().toLowerCase();
+  const list = s
+    ? all.filter(
+        (t) =>
+          t.key.toLowerCase().includes(s) ||
+          t.name.toLowerCase().includes(s) ||
+          t.whenToUse.toLowerCase().includes(s)
+      )
+    : all;
+
+  return (
+    <div className="flex max-h-[72vh] flex-col gap-4">
+      <Input
+        placeholder={m['settings.library.search']()}
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+      <div className="-mr-2 space-y-6 overflow-auto pr-2">
+        {cats.map(([cat, zhL, enL]) => {
+          const items = list.filter((t) => t.category === cat);
+          if (!items.length) return null;
+          return (
+            <div key={cat} className="space-y-3">
+              <p className="text-muted-foreground text-sm font-semibold">
+                {zh ? zhL : enL}
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {items.map((t) => (
+                  <button
+                    key={t.key}
+                    disabled={pending}
+                    onClick={() => onPick(t.key)}
+                    className="hover:border-primary group rounded-xl border p-2 text-left transition disabled:opacity-50"
+                  >
+                    <div className="pointer-events-none overflow-hidden rounded-lg border">
+                      {renderSlide(t.key, sampleSlideContent(t.key))}
+                    </div>
+                    <p className="mt-2 font-medium">{t.name}</p>
+                    <p className="text-muted-foreground line-clamp-1 text-xs">
+                      {t.whenToUse}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
