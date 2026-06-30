@@ -114,7 +114,7 @@ function SlideEditor({
 
   const save = useMutation({
     mutationFn: () =>
-      apiPost(`/api/decks/${deckId}/slides/${slide.id}`, { content }),
+      apiPatch(`/api/decks/${deckId}/slides/${slide.id}`, { content }),
     onSuccess: () => {
       toast.success(m['settings.deck_editor.saved']());
       qc.invalidateQueries({ queryKey: ['deck', deckId] });
