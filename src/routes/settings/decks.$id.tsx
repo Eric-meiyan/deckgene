@@ -461,7 +461,7 @@ function DeckEditorPage() {
       </Button>
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="max-h-[88vh] max-w-5xl overflow-hidden">
+        <DialogContent className="max-h-[92vh] w-[94vw] overflow-hidden sm:max-w-[1500px]">
           <DialogHeader>
             <DialogTitle>{m['settings.deck_editor.add']()}</DialogTitle>
           </DialogHeader>
@@ -510,9 +510,9 @@ function SlidePicker({
   const current = list.find((t) => t.key === sel) ?? list[0];
 
   return (
-    <div className="flex h-[74vh] gap-4">
-      {/* 左：紧凑列表 */}
-      <div className="flex w-56 shrink-0 flex-col gap-2">
+    <div className="flex h-[78vh] gap-5">
+      {/* 左：紧凑列表（约 1/5） */}
+      <div className="flex w-52 shrink-0 flex-col gap-2">
         <Input
           placeholder={m['settings.library.search']()}
           value={query}
