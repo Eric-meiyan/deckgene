@@ -18,6 +18,7 @@ export interface PublicSlide {
 export interface PublicBrand {
   palette: Record<string, string> | null;
   typography: Record<string, string> | null;
+  logo_url: string | null;
 }
 export interface PublicDeck {
   id: string;
@@ -56,7 +57,12 @@ export const getPublicDeckFn = createServerFn()
         .from(brandTable)
         .where(eq(brandTable.id, deck.brandId))
         .limit(1);
-      if (b) brand = { palette: b.palette, typography: b.typography };
+      if (b)
+        brand = {
+          palette: b.palette,
+          typography: b.typography,
+          logo_url: b.logoUrl,
+        };
     }
 
     return {

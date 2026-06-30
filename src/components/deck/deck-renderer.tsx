@@ -9,6 +9,7 @@ export interface RenderSlide {
 export interface RenderBrand {
   palette: Record<string, string> | null;
   typography: Record<string, string> | null;
+  logo_url?: string | null;
 }
 
 /**
@@ -28,6 +29,7 @@ function brandStyle(brand?: RenderBrand | null): React.CSSProperties {
   if (p.text) style['--foreground'] = p.text;
   if (t.body_font) style['--body-font'] = t.body_font;
   if (t.heading_font) style['--heading-font'] = t.heading_font;
+  if (brand?.logo_url) style['--brand-logo'] = `url("${brand.logo_url}")`;
   return style as React.CSSProperties;
 }
 

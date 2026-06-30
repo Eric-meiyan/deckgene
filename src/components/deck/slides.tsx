@@ -50,6 +50,11 @@ function Surface({
         className
       )}
     >
+      {/* 品牌 Logo（每页右上，--brand-logo 未设置则不显示） */}
+      <div
+        className="absolute top-6 right-6 h-7 w-28 bg-contain bg-right bg-no-repeat"
+        style={{ backgroundImage: 'var(--brand-logo, none)' }}
+      />
       {children}
     </div>
   );

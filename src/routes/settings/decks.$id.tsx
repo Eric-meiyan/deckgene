@@ -67,11 +67,13 @@ interface BrandLite {
   name: string;
   palette: Record<string, string> | null;
   typography: Record<string, string> | null;
+  logo_url: string | null;
 }
 
 function brandStyle(
   palette?: Record<string, string> | null,
-  typography?: Record<string, string> | null
+  typography?: Record<string, string> | null,
+  logoUrl?: string | null
 ): React.CSSProperties {
   const s: Record<string, string> = {};
   if (palette?.primary) {
@@ -83,6 +85,7 @@ function brandStyle(
   if (palette?.text) s['--foreground'] = palette.text;
   if (typography?.body_font) s['--body-font'] = typography.body_font;
   if (typography?.heading_font) s['--heading-font'] = typography.heading_font;
+  if (logoUrl) s['--brand-logo'] = `url("${logoUrl}")`;
   return s as React.CSSProperties;
 }
 
@@ -332,7 +335,8 @@ function DeckEditorPage() {
   const currentBrand = brandsQ.data?.find((b) => b.id === deck.brand_id);
   const previewStyle = brandStyle(
     currentBrand?.palette,
-    currentBrand?.typography
+    currentBrand?.typography,
+    currentBrand?.logo_url
   );
 
   function onDragEnd(e: DragEndEvent) {

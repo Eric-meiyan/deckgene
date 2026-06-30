@@ -28,6 +28,7 @@ async function PATCH({
     palette: body.palette,
     typography: body.typography,
     tone: body.tone,
+    logoUrl: body.logo_url,
   });
   if (!b) return respErr('Brand not found');
   return respData(toApiBrand(b));

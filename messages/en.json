@@ -941,5 +941,10 @@
   "settings.brands.live_preview": "Live preview",
   "settings.brands.heading_font": "Heading font",
   "settings.brands.body_font": "Body font",
-  "settings.brands.name": "Name"
+  "settings.brands.name": "Name",
+  "settings.brands.logo": "Logo",
+  "settings.brands.upload_logo": "Upload logo",
+  "settings.brands.remove": "Remove",
+  "settings.brands.logo_hint": "SVG/PNG, ≤200KB. Shown top-right of every slide.",
+  "settings.brands.logo_too_big": "Logo must be ≤200KB"
 }

@@ -25,6 +25,7 @@ interface BrandDTO {
   palette: Record<string, string> | null;
   typography: Record<string, string> | null;
   tone: string | null;
+  logo_url: string | null;
 }
 
 const PALETTE_KEYS = [
@@ -46,7 +47,8 @@ const PREVIEW_SLIDES: { type: string; variant?: string }[] = [
 function brandStyle(
   palette: Record<string, string>,
   headingFont?: string,
-  bodyFont?: string
+  bodyFont?: string,
+  logoUrl?: string
 ): React.CSSProperties {
   const s: Record<string, string> = {};
   if (palette.primary) {
@@ -58,6 +60,7 @@ function brandStyle(
   if (palette.text) s['--foreground'] = palette.text;
   if (bodyFont) s['--body-font'] = bodyFont;
   if (headingFont) s['--heading-font'] = headingFont;
+  if (logoUrl) s['--brand-logo'] = `url("${logoUrl}")`;
   return s as React.CSSProperties;
 }
 
@@ -98,6 +101,7 @@ function BrandEditor({ brand }: { brand: BrandDTO }) {
     brand.typography?.heading_font ?? ''
   );
   const [bodyFont, setBodyFont] = useState(brand.typography?.body_font ?? '');
+  const [logo, setLogo] = useState(brand.logo_url ?? '');
   const [palette, setPalette] = useState<Record<string, string>>({
     primary: brand.palette?.primary ?? '#25a18e',
     secondary: brand.palette?.secondary ?? '#10b981',
@@ -112,6 +116,7 @@ function BrandEditor({ brand }: { brand: BrandDTO }) {
         name,
         palette,
         tone,
+        logo_url: logo || null,
         typography: {
           ...(brand.typography ?? {}),
           heading_font: headingFont || undefined,
@@ -125,7 +130,19 @@ function BrandEditor({ brand }: { brand: BrandDTO }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const style = brandStyle(palette, headingFont, bodyFont);
+  function handleLogo(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (f.size > 200 * 1024) {
+      toast.error(m['settings.brands.logo_too_big']());
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setLogo(String(reader.result));
+    reader.readAsDataURL(f);
+  }
+
+  const style = brandStyle(palette, headingFont, bodyFont, logo);
 
   return (
     <div className="space-y-4 p-4 md:p-6">
@@ -209,6 +226,46 @@ function BrandEditor({ brand }: { brand: BrandDTO }) {
               {m['settings.brands.body_font']()}
             </p>
             <FontSelect value={bodyFont} onChange={setBodyFont} />
+          </div>
+
+          <div>
+            <p className="text-muted-foreground mb-1 text-xs">
+              {m['settings.brands.logo']()}
+            </p>
+            <div className="flex items-center gap-3">
+              <div className="bg-muted flex h-12 w-20 shrink-0 items-center justify-center overflow-hidden rounded border">
+                {logo ? (
+                  <img
+                    src={logo}
+                    alt="logo"
+                    className="max-h-full max-w-full object-contain"
+                  />
+                ) : (
+                  <span className="text-muted-foreground text-lg font-bold">
+                    {name.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <div className="space-y-1">
+                <input
+                  type="file"
+                  accept="image/svg+xml,image/png,image/jpeg"
+                  onChange={handleLogo}
+                  className="text-xs"
+                />
+                {logo && (
+                  <button
+                    className="text-muted-foreground hover:text-destructive block text-xs"
+                    onClick={() => setLogo('')}
+                  >
+                    {m['settings.brands.remove']()}
+                  </button>
+                )}
+              </div>
+            </div>
+            <p className="text-muted-foreground mt-1 text-xs">
+              {m['settings.brands.logo_hint']()}
+            </p>
           </div>
 
           <div>

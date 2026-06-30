@@ -25,6 +25,7 @@ interface BrandDTO {
   id: string;
   palette: Record<string, string> | null;
   typography: Record<string, string> | null;
+  logo_url: string | null;
 }
 
 function brandStyle(brand?: BrandDTO | null): React.CSSProperties {
@@ -40,6 +41,7 @@ function brandStyle(brand?: BrandDTO | null): React.CSSProperties {
   if (palette?.text) s['--foreground'] = palette.text;
   if (t?.body_font) s['--body-font'] = t.body_font;
   if (t?.heading_font) s['--heading-font'] = t.heading_font;
+  if (brand?.logo_url) s['--brand-logo'] = `url("${brand.logo_url}")`;
   return s as React.CSSProperties;
 }
 
