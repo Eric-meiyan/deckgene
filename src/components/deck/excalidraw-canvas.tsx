@@ -39,7 +39,8 @@ export default function ExcalidrawCanvas({
       // 只导出 PNG(展示/导出用);限定 scale=1 避免 2x 放大体积
       const blob = await exportToBlob({
         elements,
-        appState: { ...appState, exportBackground: true, exportScale: 1 },
+        // 2x 导出更清晰（PNG 走 R2，不进数据库，体积无碍）
+        appState: { ...appState, exportBackground: true, exportScale: 2 },
         files,
         mimeType: 'image/png',
       });
