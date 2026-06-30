@@ -8,7 +8,10 @@ import type { SlideTemplate } from './types';
  * 样式开关：variant（表面色调）、layoutVariant（同内容多版式）—— 在固定 schema 内。
  */
 
-const surface = z.enum(['light', 'subtle', 'dark', 'accent']).optional();
+const surface = z
+  .enum(['light', 'subtle', 'dark', 'accent'])
+  .optional()
+  .catch(undefined);
 
 // 复用：短文本 / 多行文本
 const short = (max: number) => z.string().max(max);
@@ -33,7 +36,8 @@ const title: SlideTemplate = {
     variant: surface,
     layoutVariant: z
       .enum(['default', 'centered', 'image-right', 'image-fullbleed'])
-      .optional(),
+      .optional()
+      .catch(undefined),
     image: urlOpt(),
     eyebrow: short(40).optional(),
     title: short(120),
@@ -96,7 +100,10 @@ const compare: SlideTemplate = {
     'Two things side by side (A vs B, us vs them). Use for a head-to-head of exactly two.',
   schema: z.object({
     variant: surface,
-    layoutVariant: z.enum(['default', 'vs-stack', 'table']).optional(),
+    layoutVariant: z
+      .enum(['default', 'vs-stack', 'table'])
+      .optional()
+      .catch(undefined),
     eyebrow: short(40).optional(),
     heading: long(120).optional(),
     left: z.object({ label: short(24), body: long(220) }),
@@ -179,7 +186,10 @@ const stats: SlideTemplate = {
     'Three or four metrics of equal weight. Use for a quick block of related numbers.',
   schema: z.object({
     variant: surface,
-    layoutVariant: z.enum(['row', 'grid-2x2', 'vertical-strip']).optional(),
+    layoutVariant: z
+      .enum(['row', 'grid-2x2', 'vertical-strip'])
+      .optional()
+      .catch(undefined),
     eyebrow: short(40).optional(),
     heading: short(80).optional(),
     stats: z
@@ -199,7 +209,8 @@ const bigNumber: SlideTemplate = {
     variant: surface,
     layoutVariant: z
       .enum(['default', 'centered-jumbo', 'split-context'])
-      .optional(),
+      .optional()
+      .catch(undefined),
     eyebrow: short(40).optional(),
     value: short(12),
     label: short(80),
@@ -223,7 +234,7 @@ const kpi: SlideTemplate = {
           label: short(40),
           value: short(12),
           delta: short(12).optional(),
-          trend: z.enum(['up', 'down', 'flat']).optional(),
+          trend: z.enum(['up', 'down', 'flat']).optional().catch(undefined),
         })
       )
       .min(2)
@@ -311,7 +322,8 @@ const cta: SlideTemplate = {
     variant: surface,
     layoutVariant: z
       .enum(['default', 'split-with-button', 'minimal'])
-      .optional(),
+      .optional()
+      .catch(undefined),
     eyebrow: short(40).optional(),
     heading: long(120),
     body: long(180).optional(),

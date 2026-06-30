@@ -101,8 +101,12 @@ const ENUM_ZH: Record<string, string> = {
 function humanize(k: string) {
   return k.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase());
 }
+const LABELS_EN: Record<string, string> = {
+  variant: 'Surface',
+  layoutVariant: 'Layout',
+};
 function labelFor(k: string) {
-  return isZh() ? (LABELS_ZH[k] ?? humanize(k)) : humanize(k);
+  return isZh() ? (LABELS_ZH[k] ?? humanize(k)) : (LABELS_EN[k] ?? humanize(k));
 }
 function enumLabel(v: string) {
   return isZh() ? (ENUM_ZH[v] ?? v) : humanize(v);
