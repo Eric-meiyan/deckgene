@@ -368,6 +368,14 @@ curl -X POST ${BASE}/brands/set-active \\
                 <code>list_decks</code> / <code>get_deck</code>
               </li>
               <li>
+                <code>add_slide</code> / <code>update_slide</code> /{' '}
+                <code>delete_slide</code> / <code>reorder_slides</code> —{' '}
+                {t(
+                  '给已有 deck 加/改/删/排序页',
+                  'add/edit/remove/reorder slides'
+                )}
+              </li>
+              <li>
                 <code>publish_deck</code>
               </li>
               <li>

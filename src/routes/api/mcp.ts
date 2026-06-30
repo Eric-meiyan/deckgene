@@ -10,10 +10,14 @@ import {
   toApiBrand,
 } from '@/modules/deck/brand.service';
 import {
+  addSlide,
+  deleteSlide,
   getDeckWithSlides,
   listDecks,
   publishDeck,
+  reorderSlides,
   toApiDeck,
+  updateSlide,
 } from '@/modules/deck/deck.service';
 import { generateDeck } from '@/modules/deck/generation.service';
 import {
@@ -119,6 +123,91 @@ const TOOLS: Tool[] = [
       const d = await getDeckWithSlides(args.deck_id, userId);
       if (!d) throw new Error('deck not found');
       return toApiDeck(d, envConfigs.app_url, d.slides);
+    },
+  },
+  {
+    name: 'add_slide',
+    description:
+      'Append (or insert at index) a slide to an existing deck. Use to extend a deck beyond the 20-slide generation cap, or to add pages. Get slide_type + its content schema via list_slide_templates.',
+    inputSchema: obj(
+      {
+        deck_id: { type: 'string' },
+        slide_type: { type: 'string' },
+        content: {
+          type: 'object',
+          description: 'Slide content matching the slide_type schema',
+        },
+        index: {
+          type: 'number',
+          description: '0-based insert position; omit to append at end',
+        },
+      },
+      ['deck_id', 'slide_type']
+    ),
+    run: async (args, userId) => {
+      const s = await addSlide(args.deck_id, userId, {
+        slideType: args.slide_type,
+        content: args.content ?? {},
+        index: typeof args.index === 'number' ? args.index : undefined,
+      });
+      if (!s) throw new Error('deck not found');
+      return { slide_id: s.id, order: s.order };
+    },
+  },
+  {
+    name: 'update_slide',
+    description:
+      "Update a slide's content (validated against its slide_type schema) and/or speaker notes.",
+    inputSchema: obj(
+      {
+        deck_id: { type: 'string' },
+        slide_id: { type: 'string' },
+        content: { type: 'object' },
+        notes: { type: 'string' },
+      },
+      ['deck_id', 'slide_id']
+    ),
+    run: async (args, userId) => {
+      const s = await updateSlide(args.deck_id, args.slide_id, userId, {
+        content: args.content,
+        notes: args.notes,
+      });
+      if (!s) throw new Error('slide not found');
+      return { slide_id: s.id };
+    },
+  },
+  {
+    name: 'delete_slide',
+    description: 'Delete a slide from a deck.',
+    inputSchema: obj(
+      { deck_id: { type: 'string' }, slide_id: { type: 'string' } },
+      ['deck_id', 'slide_id']
+    ),
+    run: async (args, userId) => {
+      const ok = await deleteSlide(args.deck_id, args.slide_id, userId);
+      if (!ok) throw new Error('slide not found');
+      return { deleted: true };
+    },
+  },
+  {
+    name: 'reorder_slides',
+    description:
+      'Reorder a deck by giving the full ordered list of its slide ids.',
+    inputSchema: obj(
+      {
+        deck_id: { type: 'string' },
+        ordered_slide_ids: { type: 'array', items: { type: 'string' } },
+      },
+      ['deck_id', 'ordered_slide_ids']
+    ),
+    run: async (args, userId) => {
+      const ok = await reorderSlides(
+        args.deck_id,
+        userId,
+        args.ordered_slide_ids
+      );
+      if (!ok) throw new Error('deck not found');
+      return { ok: true };
     },
   },
   {
