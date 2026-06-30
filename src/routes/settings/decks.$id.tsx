@@ -93,10 +93,12 @@ function SlideEditor({
   deckId,
   slide,
   previewStyle,
+  onInsertBelow,
 }: {
   deckId: string;
   slide: SlideDTO;
   previewStyle?: React.CSSProperties;
+  onInsertBelow?: () => void;
 }) {
   const qc = useQueryClient();
   const {
@@ -254,7 +256,18 @@ function SlideEditor({
           )}
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between">
+          {onInsertBelow ? (
+            <button
+              className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs"
+              onClick={onInsertBelow}
+            >
+              <Plus className="size-3.5" />
+              {m['settings.deck_editor.insert_below']()}
+            </button>
+          ) : (
+            <span />
+          )}
           <Button
             size="sm"
             disabled={save.isPending}
@@ -275,6 +288,7 @@ function DeckEditorPage() {
   const [order, setOrder] = useState<string[]>([]);
   const [addOpen, setAddOpen] = useState(false);
   const [addQ, setAddQ] = useState('');
+  const [addAt, setAddAt] = useState<number | undefined>(undefined);
 
   const deckQ = useQuery({
     queryKey: ['deck', id],
@@ -305,9 +319,11 @@ function DeckEditorPage() {
       apiPost(`/api/decks/${id}/slides`, {
         slide_type: slideType,
         content: {},
+        index: addAt,
       }),
     onSuccess: () => {
       setAddOpen(false);
+      setAddAt(undefined);
       qc.invalidateQueries({ queryKey: ['deck', id] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -452,12 +468,17 @@ function DeckEditorPage() {
       >
         <SortableContext items={order} strategy={verticalListSortingStrategy}>
           <div className="space-y-3">
-            {ordered.map((s) => (
+            {ordered.map((s, idx) => (
               <SlideEditor
                 key={s.id}
                 deckId={id}
                 slide={s}
                 previewStyle={previewStyle}
+                onInsertBelow={() => {
+                  setAddAt(idx + 1);
+                  setAddQ('');
+                  setAddOpen(true);
+                }}
               />
             ))}
           </div>
@@ -468,7 +489,11 @@ function DeckEditorPage() {
       <Button
         variant="outline"
         className="gap-1"
-        onClick={() => setAddOpen(true)}
+        onClick={() => {
+          setAddAt(undefined);
+          setAddQ('');
+          setAddOpen(true);
+        }}
       >
         <Plus className="size-4" />
         {m['settings.deck_editor.add']()}

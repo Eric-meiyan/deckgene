@@ -946,5 +946,6 @@
   "settings.brands.upload_logo": "上传 Logo",
   "settings.brands.remove": "移除",
   "settings.brands.logo_hint": "SVG/PNG,≤200KB,显示在每页右上角。",
-  "settings.brands.logo_too_big": "Logo 需 ≤200KB"
+  "settings.brands.logo_too_big": "Logo 需 ≤200KB",
+  "settings.deck_editor.insert_below": "在下方插入页"
 }
