@@ -195,6 +195,27 @@ export async function extractBrandFromUrl(
     // tone 提取失败不阻断
   }
 
+  // logo：apple-touch-icon → og:image → <link rel=icon>，解析为绝对地址
+  function hrefIn(re: RegExp): string | undefined {
+    const tag = html.match(re);
+    return tag?.[0].match(/(?:href|content)=["']([^"']+)["']/i)?.[1];
+  }
+  const rawLogo =
+    hrefIn(/<link[^>]*apple-touch-icon[^>]*>/i) ||
+    hrefIn(/<meta[^>]*og:image[^>]*>/i) ||
+    hrefIn(/<link[^>]*rel=["'][^"']*\bicon\b[^"']*["'][^>]*>/i);
+  let logoUrl: string | undefined;
+  if (rawLogo) {
+    try {
+      logoUrl = new URL(
+        rawLogo.replace(/&amp;/g, '&'),
+        u.toString()
+      ).toString();
+    } catch {
+      // 忽略无法解析的 logo
+    }
+  }
+
   // 名称：og:site_name / <title> 友好名，回退 hostname
   const og = html.match(
     /<meta[^>]+property=["']og:site_name["'][^>]+content=["']([^"']+)["']/i
@@ -218,6 +239,7 @@ export async function extractBrandFromUrl(
     },
     typography: { heading_font: headingFont, body_font: headingFont },
     tone,
+    logoUrl,
   });
 }
 
