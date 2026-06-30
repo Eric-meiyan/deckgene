@@ -351,8 +351,303 @@ const contactCard: SlideTemplate = {
   }),
 };
 
+// ════════ 批次 1：对齐 heydecks（Open 5 + Close 5 + Argue 10）════════
+
+// ── Open ──
+const author: SlideTemplate = {
+  key: 'author',
+  name: 'Author',
+  category: 'Open',
+  whenToUse:
+    'Introduce the presenter with name, role, and a line of credibility.',
+  schema: z.object({
+    variant: surface,
+    name: short(60),
+    role: short(80).optional(),
+    bio: long(220).optional(),
+    avatarUrl: urlOpt(),
+  }),
+};
+const toc: SlideTemplate = {
+  key: 'toc',
+  name: 'Table of contents',
+  category: 'Open',
+  whenToUse:
+    "A numbered table of contents for the deck's sections. Use for longer, structured decks.",
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    items: z
+      .array(z.object({ label: short(80), note: short(80).optional() }))
+      .min(2)
+      .max(12),
+  }),
+};
+const anecdote: SlideTemplate = {
+  key: 'anecdote',
+  name: 'Anecdote',
+  category: 'Open',
+  whenToUse: 'Open with a short story that sets up the problem.',
+  schema: z.object({
+    variant: surface,
+    eyebrow: short(40).optional(),
+    story: long(400),
+    takeaway: long(160).optional(),
+  }),
+};
+const manifesto: SlideTemplate = {
+  key: 'manifesto',
+  name: 'Manifesto',
+  category: 'Open',
+  whenToUse:
+    'A bold declaration of beliefs. Use for vision or a rallying thesis.',
+  schema: z.object({
+    variant: surface,
+    eyebrow: short(40).optional(),
+    lines: z.array(short(120)).min(2).max(6),
+  }),
+};
+const dropCap: SlideTemplate = {
+  key: 'dropCap',
+  name: 'Drop cap',
+  category: 'Open',
+  whenToUse: 'An editorial opening paragraph with an oversized initial.',
+  schema: z.object({
+    variant: surface,
+    eyebrow: short(40).optional(),
+    body: long(600),
+  }),
+};
+
+// ── Argue ──
+const calloutCard: SlideTemplate = {
+  key: 'calloutCard',
+  name: 'Callout card',
+  category: 'Argue',
+  whenToUse: 'One highlighted note, warning, or takeaway.',
+  schema: z.object({
+    variant: surface,
+    kind: z.enum(['info', 'warning', 'success']).optional().catch(undefined),
+    title: short(80),
+    body: long(280),
+  }),
+};
+const beforeAfter: SlideTemplate = {
+  key: 'beforeAfter',
+  name: 'Before / After',
+  category: 'Argue',
+  whenToUse: 'A start state and an end state. Use to show a transformation.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    before: z.object({ label: short(24), body: long(220) }),
+    after: z.object({ label: short(24), body: long(220) }),
+  }),
+};
+const testimonial: SlideTemplate = {
+  key: 'testimonial',
+  name: 'Testimonial',
+  category: 'Argue',
+  whenToUse: 'One customer quote with attribution.',
+  schema: z.object({
+    variant: surface,
+    quote: long(320),
+    author: short(60).optional(),
+    role: short(80).optional(),
+  }),
+};
+const faq: SlideTemplate = {
+  key: 'faq',
+  name: 'FAQ / objections',
+  category: 'Argue',
+  whenToUse: 'Common questions with short answers. Use to pre-empt objections.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    items: z
+      .array(z.object({ q: short(120), a: long(220) }))
+      .min(1)
+      .max(6),
+  }),
+};
+const checklist: SlideTemplate = {
+  key: 'checklist',
+  name: 'Checklist',
+  category: 'Argue',
+  whenToUse: 'Items to tick off. Use for requirements or a do-this list.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    items: z.array(short(120)).min(2).max(10),
+  }),
+};
+const valueProp: SlideTemplate = {
+  key: 'valueProp',
+  name: 'Value proposition',
+  category: 'Argue',
+  whenToUse: "The core value proposition and who it's for.",
+  schema: z.object({
+    variant: surface,
+    eyebrow: short(40).optional(),
+    statement: long(240),
+    forWho: short(120).optional(),
+  }),
+};
+const principle: SlideTemplate = {
+  key: 'principle',
+  name: 'Principle',
+  category: 'Argue',
+  whenToUse: 'One guiding principle stated and explained.',
+  schema: z.object({
+    variant: surface,
+    number: short(8).optional(),
+    title: short(80),
+    body: long(300),
+  }),
+};
+const actionItems: SlideTemplate = {
+  key: 'actionItems',
+  name: 'Action items',
+  category: 'Argue',
+  whenToUse: 'Next steps with owners and due dates.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    items: z
+      .array(
+        z.object({
+          task: short(120),
+          owner: short(40).optional(),
+          due: short(40).optional(),
+        })
+      )
+      .min(1)
+      .max(8),
+  }),
+};
+const proConCard: SlideTemplate = {
+  key: 'proConCard',
+  name: 'Pro / Con card',
+  category: 'Argue',
+  whenToUse: 'Pros on one side, cons on the other.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    pros: z.array(short(100)).min(1).max(6),
+    cons: z.array(short(100)).min(1).max(6),
+  }),
+};
+const mythVsReality: SlideTemplate = {
+  key: 'mythVsReality',
+  name: 'Myth vs reality',
+  category: 'Argue',
+  whenToUse: 'A misconception paired with the truth.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    myth: long(220),
+    reality: long(220),
+  }),
+};
+
+// ── Close ──
+const pullQuoteWall: SlideTemplate = {
+  key: 'pullQuoteWall',
+  name: 'Quote wall',
+  category: 'Close',
+  whenToUse: 'Several short quotes arranged together.',
+  schema: z.object({
+    variant: surface,
+    quotes: z
+      .array(z.object({ text: long(160), author: short(60).optional() }))
+      .min(2)
+      .max(6),
+  }),
+};
+const quoteGrid: SlideTemplate = {
+  key: 'quoteGrid',
+  name: 'Quote grid',
+  category: 'Close',
+  whenToUse: 'A grid of several quotes. Use for multiple testimonials at once.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    quotes: z
+      .array(z.object({ text: long(160), author: short(60).optional() }))
+      .min(2)
+      .max(6),
+  }),
+};
+const resources: SlideTemplate = {
+  key: 'resources',
+  name: 'Resources',
+  category: 'Close',
+  whenToUse: 'Links and references to go deeper.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    items: z
+      .array(
+        z.object({
+          label: short(80),
+          url: urlOpt(),
+          note: short(80).optional(),
+        })
+      )
+      .min(1)
+      .max(8),
+  }),
+};
+const thanksClose: SlideTemplate = {
+  key: 'thanksClose',
+  name: 'Thanks / close',
+  category: 'Close',
+  whenToUse: 'A warm closing thank-you. Use as the final slide.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80),
+    subtitle: long(180).optional(),
+  }),
+};
+const offerStack: SlideTemplate = {
+  key: 'offerStack',
+  name: 'Offer stack',
+  category: 'Close',
+  whenToUse: "A bundle's components and value versus price.",
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    items: z
+      .array(z.object({ label: short(80), value: short(24).optional() }))
+      .min(1)
+      .max(8),
+    price: short(24).optional(),
+    note: long(160).optional(),
+  }),
+};
+
 /** 首批全部模板（注册表数据源）。 */
 export const SLIDE_TEMPLATES: SlideTemplate[] = [
+  author,
+  toc,
+  anecdote,
+  manifesto,
+  dropCap,
+  calloutCard,
+  beforeAfter,
+  testimonial,
+  faq,
+  checklist,
+  valueProp,
+  principle,
+  actionItems,
+  proConCard,
+  mythVsReality,
+  pullQuoteWall,
+  quoteGrid,
+  resources,
+  thanksClose,
+  offerStack,
   // Open
   title,
   agenda,

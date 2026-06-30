@@ -522,7 +522,449 @@ function DataTableSlide({ c }: { c: Content }) {
   );
 }
 
+// ════════ 批次 1 渲染器（对齐 heydecks）════════
+
+function H({ children }: { children?: any }) {
+  if (!children) return null;
+  return <h2 className="mb-6 text-3xl font-bold sm:text-4xl">{children}</h2>;
+}
+
+// ── Open ──
+function AuthorSlide({ c }: { c: Content }) {
+  return (
+    <Surface variant={c.variant}>
+      <div className="flex items-center gap-6">
+        <div className="bg-primary/15 text-primary flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-3xl font-bold">
+          {c.avatarUrl ? (
+            <img src={c.avatarUrl} alt="" className="size-full object-cover" />
+          ) : (
+            (c.name?.[0] ?? 'A')
+          )}
+        </div>
+        <div>
+          <h1 className="text-4xl font-bold">{c.name}</h1>
+          {c.role && (
+            <p className={cn('mt-1 text-lg', eyebrowClass(c.variant))}>
+              {c.role}
+            </p>
+          )}
+          {c.bio && (
+            <p className={cn('mt-3 max-w-xl', mutedClass(c.variant))}>
+              {c.bio}
+            </p>
+          )}
+        </div>
+      </div>
+    </Surface>
+  );
+}
+function TocSlide({ c }: { c: Content }) {
+  const items: Content[] = c.items ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'Contents'}</H>
+      <ol className="grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2">
+        {items.map((it, i) => (
+          <li key={i} className="flex items-baseline gap-3">
+            <span className={cn('text-sm font-bold', eyebrowClass(c.variant))}>
+              {String(i + 1).padStart(2, '0')}
+            </span>
+            <span className="font-medium">{it.label}</span>
+            {it.note && (
+              <span className={cn('text-sm', mutedClass(c.variant))}>
+                — {it.note}
+              </span>
+            )}
+          </li>
+        ))}
+      </ol>
+    </Surface>
+  );
+}
+function AnecdoteSlide({ c }: { c: Content }) {
+  return (
+    <Surface variant={c.variant}>
+      <Eyebrow variant={c.variant}>{c.eyebrow}</Eyebrow>
+      <p className="max-w-3xl text-2xl leading-relaxed font-medium sm:text-3xl">
+        “{c.story}”
+      </p>
+      {c.takeaway && (
+        <p className={cn('mt-6 max-w-2xl', mutedClass(c.variant))}>
+          {c.takeaway}
+        </p>
+      )}
+    </Surface>
+  );
+}
+function ManifestoSlide({ c }: { c: Content }) {
+  const lines: string[] = c.lines ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <Eyebrow variant={c.variant}>{c.eyebrow}</Eyebrow>
+      <div className="space-y-2">
+        {lines.map((l, i) => (
+          <p key={i} className="text-3xl font-bold tracking-tight sm:text-4xl">
+            {l}
+          </p>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function DropCapSlide({ c }: { c: Content }) {
+  const body: string = c.body ?? '';
+  return (
+    <Surface variant={c.variant}>
+      <Eyebrow variant={c.variant}>{c.eyebrow}</Eyebrow>
+      <p className="max-w-3xl text-lg leading-relaxed">
+        <span className="text-primary float-left mr-3 text-7xl leading-[0.8] font-bold">
+          {body.slice(0, 1)}
+        </span>
+        {body.slice(1)}
+      </p>
+    </Surface>
+  );
+}
+
+// ── Argue ──
+function CalloutCardSlide({ c }: { c: Content }) {
+  const tone =
+    c.kind === 'warning'
+      ? 'border-amber-500 bg-amber-500/10'
+      : c.kind === 'success'
+        ? 'border-emerald-500 bg-emerald-500/10'
+        : 'border-primary bg-primary/10';
+  return (
+    <Surface variant={c.variant}>
+      <div className={cn('rounded-2xl border-l-4 p-6', tone)}>
+        <h2 className="text-2xl font-bold">{c.title}</h2>
+        <p className={cn('mt-2 text-lg', mutedClass(c.variant))}>{c.body}</p>
+      </div>
+    </Surface>
+  );
+}
+function TwoCol({
+  variant,
+  heading,
+  left,
+  right,
+  leftBody,
+  rightBody,
+}: {
+  variant?: string;
+  heading?: string;
+  left: string;
+  right: string;
+  leftBody: string;
+  rightBody: string;
+}) {
+  return (
+    <Surface variant={variant}>
+      <H>{heading}</H>
+      <div className="grid gap-5 sm:grid-cols-2">
+        {[
+          [left, leftBody],
+          [right, rightBody],
+        ].map(([label, body], i) => (
+          <div
+            key={i}
+            className="border-border/40 bg-background/40 rounded-2xl border p-5"
+          >
+            <p className={cn('mb-2 text-sm font-bold', eyebrowClass(variant))}>
+              {label}
+            </p>
+            <p>{body}</p>
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function BeforeAfterSlide({ c }: { c: Content }) {
+  return (
+    <TwoCol
+      variant={c.variant}
+      heading={c.heading}
+      left={c.before?.label ?? 'Before'}
+      right={c.after?.label ?? 'After'}
+      leftBody={c.before?.body ?? ''}
+      rightBody={c.after?.body ?? ''}
+    />
+  );
+}
+function MythVsRealitySlide({ c }: { c: Content }) {
+  return (
+    <TwoCol
+      variant={c.variant}
+      heading={c.heading}
+      left="Myth"
+      right="Reality"
+      leftBody={c.myth ?? ''}
+      rightBody={c.reality ?? ''}
+    />
+  );
+}
+function TestimonialSlide({ c }: { c: Content }) {
+  return (
+    <Surface variant={c.variant}>
+      <p className="max-w-3xl text-2xl leading-relaxed font-medium sm:text-3xl">
+        “{c.quote}”
+      </p>
+      {(c.author || c.role) && (
+        <p className={cn('mt-6', mutedClass(c.variant))}>
+          — {[c.author, c.role].filter(Boolean).join(', ')}
+        </p>
+      )}
+    </Surface>
+  );
+}
+function FaqSlide({ c }: { c: Content }) {
+  const items: Content[] = c.items ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'FAQ'}</H>
+      <div className="space-y-4">
+        {items.map((it, i) => (
+          <div key={i}>
+            <p className="font-semibold">{it.q}</p>
+            <p className={cn('mt-0.5', mutedClass(c.variant))}>{it.a}</p>
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function ChecklistSlide({ c }: { c: Content }) {
+  const items: string[] = c.items ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading}</H>
+      <ul className="space-y-3">
+        {items.map((it, i) => (
+          <li key={i} className="flex items-start gap-3">
+            <span className="bg-primary/15 text-primary inline-flex size-6 shrink-0 items-center justify-center rounded-md text-sm font-bold">
+              ✓
+            </span>
+            <span>{it}</span>
+          </li>
+        ))}
+      </ul>
+    </Surface>
+  );
+}
+function ValuePropSlide({ c }: { c: Content }) {
+  return (
+    <Surface variant={c.variant}>
+      <Eyebrow variant={c.variant}>{c.eyebrow}</Eyebrow>
+      <p className="max-w-3xl text-3xl font-bold sm:text-4xl">{c.statement}</p>
+      {c.forWho && (
+        <p className={cn('mt-4', mutedClass(c.variant))}>For: {c.forWho}</p>
+      )}
+    </Surface>
+  );
+}
+function PrincipleSlide({ c }: { c: Content }) {
+  return (
+    <Surface variant={c.variant}>
+      {c.number && (
+        <p className={cn('text-6xl font-bold', eyebrowClass(c.variant))}>
+          {c.number}
+        </p>
+      )}
+      <h2 className="mt-2 text-3xl font-bold sm:text-4xl">{c.title}</h2>
+      <p className={cn('mt-4 max-w-2xl text-lg', mutedClass(c.variant))}>
+        {c.body}
+      </p>
+    </Surface>
+  );
+}
+function ActionItemsSlide({ c }: { c: Content }) {
+  const items: Content[] = c.items ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'Action items'}</H>
+      <ul className="space-y-3">
+        {items.map((it, i) => (
+          <li key={i} className="flex items-start justify-between gap-4">
+            <span className="flex items-start gap-3">
+              <span className="text-primary">☐</span>
+              {it.task}
+            </span>
+            {(it.owner || it.due) && (
+              <span className={cn('shrink-0 text-sm', mutedClass(c.variant))}>
+                {[it.owner, it.due].filter(Boolean).join(' · ')}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </Surface>
+  );
+}
+function ProConCardSlide({ c }: { c: Content }) {
+  const pros: string[] = c.pros ?? [];
+  const cons: string[] = c.cons ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading}</H>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-5">
+          <p className="mb-2 font-bold text-emerald-600">Pros</p>
+          <ul className="space-y-1.5">
+            {pros.map((p, i) => (
+              <li key={i}>+ {p}</li>
+            ))}
+          </ul>
+        </div>
+        <div className="rounded-2xl border border-red-500/40 bg-red-500/10 p-5">
+          <p className="mb-2 font-bold text-red-600">Cons</p>
+          <ul className="space-y-1.5">
+            {cons.map((p, i) => (
+              <li key={i}>− {p}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </Surface>
+  );
+}
+
+// ── Close ──
+function PullQuoteWallSlide({ c }: { c: Content }) {
+  const quotes: Content[] = c.quotes ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <div className="space-y-4">
+        {quotes.map((q, i) => (
+          <p key={i} className="text-xl font-medium">
+            “{q.text}”
+            {q.author && (
+              <span className={cn('ml-2 text-sm', mutedClass(c.variant))}>
+                — {q.author}
+              </span>
+            )}
+          </p>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function QuoteGridSlide({ c }: { c: Content }) {
+  const quotes: Content[] = c.quotes ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading}</H>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {quotes.map((q, i) => (
+          <div
+            key={i}
+            className="border-border/40 bg-background/40 rounded-2xl border p-4"
+          >
+            <p>“{q.text}”</p>
+            {q.author && (
+              <p className={cn('mt-2 text-sm', mutedClass(c.variant))}>
+                — {q.author}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function ResourcesSlide({ c }: { c: Content }) {
+  const items: Content[] = c.items ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'Resources'}</H>
+      <ul className="space-y-2.5">
+        {items.map((it, i) => (
+          <li key={i} className="flex items-baseline gap-2">
+            <span className={eyebrowClass(c.variant)}>→</span>
+            <span className="font-medium">{it.label}</span>
+            {it.url && (
+              <span className={cn('text-sm', mutedClass(c.variant))}>
+                {it.url}
+              </span>
+            )}
+            {it.note && (
+              <span className={cn('text-sm', mutedClass(c.variant))}>
+                — {it.note}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </Surface>
+  );
+}
+function ThanksCloseSlide({ c }: { c: Content }) {
+  return (
+    <Surface variant={c.variant} className="items-center text-center">
+      <h1 className="text-5xl font-bold tracking-tight sm:text-6xl">
+        {c.heading ?? 'Thank you'}
+      </h1>
+      {c.subtitle && (
+        <p className={cn('mt-4 max-w-xl text-lg', mutedClass(c.variant))}>
+          {c.subtitle}
+        </p>
+      )}
+    </Surface>
+  );
+}
+function OfferStackSlide({ c }: { c: Content }) {
+  const items: Content[] = c.items ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading}</H>
+      <ul className="space-y-2">
+        {items.map((it, i) => (
+          <li
+            key={i}
+            className="border-border/30 flex items-center justify-between border-b py-1.5"
+          >
+            <span>{it.label}</span>
+            {it.value && (
+              <span className={cn('text-sm', mutedClass(c.variant))}>
+                {it.value}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+      {c.price && (
+        <p className={cn('mt-4 text-3xl font-bold', eyebrowClass(c.variant))}>
+          {c.price}
+        </p>
+      )}
+      {c.note && (
+        <p className={cn('mt-1 text-sm', mutedClass(c.variant))}>{c.note}</p>
+      )}
+    </Surface>
+  );
+}
+
 const RENDERERS: Record<string, (c: Content) => React.ReactNode> = {
+  author: (c) => <AuthorSlide c={c} />,
+  toc: (c) => <TocSlide c={c} />,
+  anecdote: (c) => <AnecdoteSlide c={c} />,
+  manifesto: (c) => <ManifestoSlide c={c} />,
+  dropCap: (c) => <DropCapSlide c={c} />,
+  calloutCard: (c) => <CalloutCardSlide c={c} />,
+  beforeAfter: (c) => <BeforeAfterSlide c={c} />,
+  testimonial: (c) => <TestimonialSlide c={c} />,
+  faq: (c) => <FaqSlide c={c} />,
+  checklist: (c) => <ChecklistSlide c={c} />,
+  valueProp: (c) => <ValuePropSlide c={c} />,
+  principle: (c) => <PrincipleSlide c={c} />,
+  actionItems: (c) => <ActionItemsSlide c={c} />,
+  proConCard: (c) => <ProConCardSlide c={c} />,
+  mythVsReality: (c) => <MythVsRealitySlide c={c} />,
+  pullQuoteWall: (c) => <PullQuoteWallSlide c={c} />,
+  quoteGrid: (c) => <QuoteGridSlide c={c} />,
+  resources: (c) => <ResourcesSlide c={c} />,
+  thanksClose: (c) => <ThanksCloseSlide c={c} />,
+  offerStack: (c) => <OfferStackSlide c={c} />,
   title: (c) => <TitleSlide c={c} />,
   agenda: (c) => <AgendaSlide c={c} />,
   statement: (c) => <StatementSlide c={c} />,
