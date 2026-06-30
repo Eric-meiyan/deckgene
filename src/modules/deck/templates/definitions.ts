@@ -1142,8 +1142,336 @@ const benchmark: SlideTemplate = {
   }),
 };
 
+// ════════ 批次 4：Show 剩余 19（图示类）════════
+const embed: SlideTemplate = {
+  key: 'embed',
+  name: 'Embed',
+  category: 'Show',
+  whenToUse: 'An embedded video, demo, or live element.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    url: urlOpt(),
+    caption: short(120).optional(),
+  }),
+};
+const storyboard: SlideTemplate = {
+  key: 'storyboard',
+  name: 'Storyboard',
+  category: 'Show',
+  whenToUse: 'A narrative across a few panels. Walk through a scenario.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    panels: z
+      .array(z.object({ caption: short(120) }))
+      .min(2)
+      .max(6),
+  }),
+};
+const funnel: SlideTemplate = {
+  key: 'funnel',
+  name: 'Funnel',
+  category: 'Show',
+  whenToUse: 'Stages that narrow top to bottom. Conversion or drop-off.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    stages: z
+      .array(z.object({ label: short(40), value: short(24).optional() }))
+      .min(2)
+      .max(6),
+  }),
+};
+const gauge: SlideTemplate = {
+  key: 'gauge',
+  name: 'Gauge',
+  category: 'Show',
+  whenToUse: 'A single value against a target or range.',
+  schema: z.object({
+    variant: surface,
+    label: short(80).optional(),
+    value: z.number(),
+    max: z.number().optional(),
+    unit: short(12).optional(),
+  }),
+};
+const customerJourney: SlideTemplate = {
+  key: 'customerJourney',
+  name: 'Customer journey',
+  category: 'Show',
+  whenToUse: "A user's path across stages with how they feel.",
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    stages: z
+      .array(
+        z.object({
+          stage: short(40),
+          action: short(80).optional(),
+          feeling: z
+            .enum(['happy', 'neutral', 'sad'])
+            .optional()
+            .catch(undefined),
+        })
+      )
+      .min(2)
+      .max(6),
+  }),
+};
+const waterfall: SlideTemplate = {
+  key: 'waterfall',
+  name: 'Waterfall',
+  category: 'Show',
+  whenToUse: 'A bridge between two totals via additions and subtractions.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    steps: z
+      .array(z.object({ label: short(40), value: z.number() }))
+      .min(2)
+      .max(8),
+  }),
+};
+const metricDashboard: SlideTemplate = {
+  key: 'metricDashboard',
+  name: 'Metric dashboard',
+  category: 'Show',
+  whenToUse: 'Many metrics with status and trend together.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    metrics: z
+      .array(
+        z.object({
+          label: short(40),
+          value: short(16),
+          status: z.enum(['good', 'warn', 'bad']).optional().catch(undefined),
+          trend: z.enum(['up', 'down', 'flat']).optional().catch(undefined),
+        })
+      )
+      .min(2)
+      .max(8),
+  }),
+};
+const trafficLight: SlideTemplate = {
+  key: 'trafficLight',
+  name: 'Traffic light',
+  category: 'Show',
+  whenToUse: 'Red/amber/green across workstreams. Use for a RAG status.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    items: z
+      .array(
+        z.object({
+          label: short(60),
+          status: z.enum(['red', 'amber', 'green']).optional().catch(undefined),
+          note: short(80).optional(),
+        })
+      )
+      .min(1)
+      .max(8),
+  }),
+};
+const gantt: SlideTemplate = {
+  key: 'gantt',
+  name: 'Gantt',
+  category: 'Show',
+  whenToUse: 'Tasks across time with durations. Use for a scheduled plan.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    tasks: z
+      .array(
+        z.object({
+          label: short(40),
+          start: z.number().optional(),
+          span: z.number().optional(),
+        })
+      )
+      .min(1)
+      .max(8),
+  }),
+};
+const kanban: SlideTemplate = {
+  key: 'kanban',
+  name: 'Kanban board',
+  category: 'Show',
+  whenToUse: 'Work items in columns by stage.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    columns: z
+      .array(z.object({ title: short(40), items: long(300).optional() }))
+      .min(2)
+      .max(4),
+  }),
+};
+const milestonePlan: SlideTemplate = {
+  key: 'milestonePlan',
+  name: 'Milestone plan',
+  category: 'Show',
+  whenToUse: 'Key milestones with target dates.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    milestones: z
+      .array(z.object({ date: short(24), label: short(80) }))
+      .min(2)
+      .max(8),
+  }),
+};
+const dependencyMap: SlideTemplate = {
+  key: 'dependencyMap',
+  name: 'Dependency map',
+  category: 'Show',
+  whenToUse: 'What depends on or blocks what. Show critical paths.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    items: z
+      .array(z.object({ label: short(40), dependsOn: short(80).optional() }))
+      .min(1)
+      .max(8),
+  }),
+};
+const businessModelCanvas: SlideTemplate = {
+  key: 'businessModelCanvas',
+  name: 'Business Model Canvas',
+  category: 'Show',
+  whenToUse: 'The nine business-model blocks.',
+  schema: z.object({
+    variant: surface,
+    keyPartners: long(160).optional(),
+    keyActivities: long(160).optional(),
+    keyResources: long(160).optional(),
+    valuePropositions: long(160).optional(),
+    customerRelationships: long(160).optional(),
+    channels: long(160).optional(),
+    customerSegments: long(160).optional(),
+    costStructure: long(160).optional(),
+    revenueStreams: long(160).optional(),
+  }),
+};
+const orgChart: SlideTemplate = {
+  key: 'orgChart',
+  name: 'Org chart',
+  category: 'Show',
+  whenToUse: 'Reporting lines and team structure.',
+  schema: z.object({
+    variant: surface,
+    root: short(60),
+    rootRole: short(60).optional(),
+    reports: z
+      .array(z.object({ name: short(40), role: short(40).optional() }))
+      .min(1)
+      .max(6),
+  }),
+};
+const salesPipeline: SlideTemplate = {
+  key: 'salesPipeline',
+  name: 'Sales pipeline',
+  category: 'Show',
+  whenToUse: 'Deals by stage with values.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    stages: z
+      .array(
+        z.object({
+          label: short(40),
+          value: short(24).optional(),
+          count: short(12).optional(),
+        })
+      )
+      .min(2)
+      .max(6),
+  }),
+};
+const channelMix: SlideTemplate = {
+  key: 'channelMix',
+  name: 'Channel mix',
+  category: 'Show',
+  whenToUse: 'Reach or spend split across channels.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    channels: z
+      .array(z.object({ label: short(40), value: z.number() }))
+      .min(2)
+      .max(8),
+  }),
+};
+const techRadar: SlideTemplate = {
+  key: 'techRadar',
+  name: 'Tech radar',
+  category: 'Show',
+  whenToUse: 'Technologies rated adopt/trial/hold.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    items: z
+      .array(
+        z.object({
+          label: short(40),
+          ring: z
+            .enum(['adopt', 'trial', 'assess', 'hold'])
+            .optional()
+            .catch(undefined),
+        })
+      )
+      .min(1)
+      .max(16),
+  }),
+};
+const architecture: SlideTemplate = {
+  key: 'architecture',
+  name: 'Architecture',
+  category: 'Show',
+  whenToUse: 'A system or component diagram. Explain how something is built.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    layers: z
+      .array(z.object({ label: short(40), components: short(160).optional() }))
+      .min(1)
+      .max(6),
+  }),
+};
+const userFlow: SlideTemplate = {
+  key: 'userFlow',
+  name: 'User flow',
+  category: 'Show',
+  whenToUse: 'The steps a user moves through in a product.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    steps: z.array(short(40)).min(2).max(8),
+  }),
+};
+
 /** 首批全部模板（注册表数据源）。 */
 export const SLIDE_TEMPLATES: SlideTemplate[] = [
+  embed,
+  storyboard,
+  funnel,
+  gauge,
+  customerJourney,
+  waterfall,
+  metricDashboard,
+  trafficLight,
+  gantt,
+  kanban,
+  milestonePlan,
+  dependencyMap,
+  businessModelCanvas,
+  orgChart,
+  salesPipeline,
+  channelMix,
+  techRadar,
+  architecture,
+  userFlow,
   roadmap,
   services,
   pricing,

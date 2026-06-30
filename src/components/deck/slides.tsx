@@ -1791,7 +1791,510 @@ function NpsScoreSlide({ c }: { c: Content }) {
   );
 }
 
+// ════════ 批次 4 渲染器（Show 剩余 19）════════
+
+function EmbedSlide({ c }: { c: Content }) {
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading}</H>
+      <div className="bg-muted flex aspect-video items-center justify-center rounded-xl">
+        <span className="bg-primary text-primary-foreground flex size-16 items-center justify-center rounded-full text-2xl">
+          ▶
+        </span>
+      </div>
+      {(c.caption || c.url) && (
+        <p className={cn('mt-2 text-sm', mutedClass(c.variant))}>
+          {c.caption ?? c.url}
+        </p>
+      )}
+    </Surface>
+  );
+}
+function StoryboardSlide({ c }: { c: Content }) {
+  const panels: Content[] = c.panels ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading}</H>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {panels.map((p, i) => (
+          <div
+            key={i}
+            className="border-border/40 bg-background/40 rounded-xl border p-3"
+          >
+            <div className={cn('text-xs font-bold', eyebrowClass(c.variant))}>
+              {i + 1}
+            </div>
+            <p className="mt-1 text-sm">{p.caption}</p>
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function FunnelSlide({ c }: { c: Content }) {
+  const stages: Content[] = c.stages ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'Funnel'}</H>
+      <div className="space-y-1.5">
+        {stages.map((s, i) => (
+          <div
+            key={i}
+            className="bg-primary/70 text-primary-foreground mx-auto flex items-center justify-between rounded-md px-4 py-2"
+            style={{ width: `${100 - i * (60 / Math.max(1, stages.length))}%` }}
+          >
+            <span className="text-sm font-medium">{s.label}</span>
+            {s.value && <span className="text-sm">{s.value}</span>}
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function GaugeSlide({ c }: { c: Content }) {
+  const max = Number(c.max) || 100;
+  const pct = Math.min(100, Math.max(0, ((Number(c.value) || 0) / max) * 100));
+  return (
+    <Surface variant={c.variant} className="items-center text-center">
+      <div className="text-6xl font-black sm:text-7xl">
+        {c.value}
+        {c.unit}
+      </div>
+      {c.label && <div className="mt-1 text-lg font-medium">{c.label}</div>}
+      <div className="bg-muted mt-6 h-4 w-full max-w-md overflow-hidden rounded-full">
+        <div
+          className="bg-primary h-full rounded-full"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <div className={cn('mt-1 text-xs', mutedClass(c.variant))}>
+        {c.value} / {max}
+        {c.unit}
+      </div>
+    </Surface>
+  );
+}
+function CustomerJourneySlide({ c }: { c: Content }) {
+  const stages: Content[] = c.stages ?? [];
+  const face: Record<string, string> = {
+    happy: '🙂',
+    neutral: '😐',
+    sad: '🙁',
+  };
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'Journey'}</H>
+      <div className="flex gap-2">
+        {stages.map((s, i) => (
+          <div
+            key={i}
+            className="border-border/40 bg-background/40 flex-1 rounded-xl border p-3 text-center"
+          >
+            <div className="text-2xl">{face[s.feeling] ?? '•'}</div>
+            <p className="mt-1 font-medium">{s.stage}</p>
+            {s.action && (
+              <p className={cn('mt-0.5 text-xs', mutedClass(c.variant))}>
+                {s.action}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function WaterfallSlide({ c }: { c: Content }) {
+  const steps: Content[] = c.steps ?? [];
+  const max = Math.max(1, ...steps.map((s) => Math.abs(Number(s.value) || 0)));
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading}</H>
+      <div className="space-y-2">
+        {steps.map((s, i) => {
+          const v = Number(s.value) || 0;
+          return (
+            <div key={i} className="flex items-center gap-3">
+              <span className="w-28 shrink-0 truncate text-sm">{s.label}</span>
+              <div className="bg-muted h-5 flex-1 overflow-hidden rounded">
+                <div
+                  className={cn(
+                    'h-full',
+                    v >= 0 ? 'bg-emerald-500' : 'bg-red-500'
+                  )}
+                  style={{ width: `${(Math.abs(v) / max) * 100}%` }}
+                />
+              </div>
+              <span className="w-14 shrink-0 text-right text-sm font-semibold">
+                {v > 0 ? '+' : ''}
+                {v}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </Surface>
+  );
+}
+function MetricDashboardSlide({ c }: { c: Content }) {
+  const metrics: Content[] = c.metrics ?? [];
+  const sc: Record<string, string> = {
+    good: 'text-emerald-600',
+    warn: 'text-amber-600',
+    bad: 'text-red-600',
+  };
+  const tr: Record<string, string> = { up: '↑', down: '↓', flat: '→' };
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading}</H>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        {metrics.map((m, i) => (
+          <div
+            key={i}
+            className="border-border/40 bg-background/40 rounded-xl border p-3"
+          >
+            <div className={cn('text-2xl font-bold', sc[m.status] ?? '')}>
+              {m.value}{' '}
+              {m.trend && <span className="text-base">{tr[m.trend]}</span>}
+            </div>
+            <div className={cn('mt-0.5 text-xs', mutedClass(c.variant))}>
+              {m.label}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function TrafficLightSlide({ c }: { c: Content }) {
+  const items: Content[] = c.items ?? [];
+  const col: Record<string, string> = {
+    red: 'bg-red-500',
+    amber: 'bg-amber-500',
+    green: 'bg-emerald-500',
+  };
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'Status'}</H>
+      <ul className="space-y-2.5">
+        {items.map((it, i) => (
+          <li key={i} className="flex items-center justify-between gap-4">
+            <span className="flex items-center gap-3 font-medium">
+              <span
+                className={cn(
+                  'inline-block size-3 rounded-full',
+                  col[it.status] ?? 'bg-muted-foreground/40'
+                )}
+              />
+              {it.label}
+            </span>
+            {it.note && (
+              <span className={cn('text-sm', mutedClass(c.variant))}>
+                {it.note}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </Surface>
+  );
+}
+function GanttSlide({ c }: { c: Content }) {
+  const tasks: Content[] = c.tasks ?? [];
+  const end = Math.max(
+    1,
+    ...tasks.map((t) => (Number(t.start) || 0) + (Number(t.span) || 1))
+  );
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading}</H>
+      <div className="space-y-2">
+        {tasks.map((t, i) => (
+          <div key={i} className="flex items-center gap-3">
+            <span className="w-28 shrink-0 truncate text-sm">{t.label}</span>
+            <div className="relative h-5 flex-1">
+              <div
+                className="bg-primary/70 absolute h-full rounded"
+                style={{
+                  left: `${((Number(t.start) || 0) / end) * 100}%`,
+                  width: `${((Number(t.span) || 1) / end) * 100}%`,
+                }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function KanbanSlide({ c }: { c: Content }) {
+  const cols: Content[] = c.columns ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading}</H>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {cols.map((col, i) => (
+          <div key={i} className="bg-muted/40 rounded-xl p-3">
+            <p
+              className={cn('mb-2 text-sm font-bold', eyebrowClass(c.variant))}
+            >
+              {col.title}
+            </p>
+            <div className="space-y-1.5">
+              {String(col.items ?? '')
+                .split('\n')
+                .filter(Boolean)
+                .map((it: string, j: number) => (
+                  <div
+                    key={j}
+                    className="border-border/40 bg-background rounded-md border px-2 py-1.5 text-sm"
+                  >
+                    {it}
+                  </div>
+                ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function MilestonePlanSlide({ c }: { c: Content }) {
+  const ms: Content[] = c.milestones ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'Milestones'}</H>
+      <ul className="space-y-3">
+        {ms.map((m, i) => (
+          <li key={i} className="flex items-baseline gap-4">
+            <span
+              className={cn(
+                'w-24 shrink-0 text-sm font-bold',
+                eyebrowClass(c.variant)
+              )}
+            >
+              {m.date}
+            </span>
+            <span>{m.label}</span>
+          </li>
+        ))}
+      </ul>
+    </Surface>
+  );
+}
+function DependencyMapSlide({ c }: { c: Content }) {
+  const items: Content[] = c.items ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'Dependencies'}</H>
+      <ul className="space-y-2.5">
+        {items.map((it, i) => (
+          <li key={i} className="flex items-center gap-2">
+            <span className="font-medium">{it.label}</span>
+            {it.dependsOn && (
+              <>
+                <span className={eyebrowClass(c.variant)}>←</span>
+                <span className={mutedClass(c.variant)}>{it.dependsOn}</span>
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
+    </Surface>
+  );
+}
+function BusinessModelCanvasSlide({ c }: { c: Content }) {
+  const blocks = [
+    ['Key Partners', c.keyPartners],
+    ['Key Activities', c.keyActivities],
+    ['Key Resources', c.keyResources],
+    ['Value Propositions', c.valuePropositions],
+    ['Customer Relationships', c.customerRelationships],
+    ['Channels', c.channels],
+    ['Customer Segments', c.customerSegments],
+    ['Cost Structure', c.costStructure],
+    ['Revenue Streams', c.revenueStreams],
+  ];
+  return (
+    <Surface variant={c.variant}>
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        {blocks.map(([label, val], i) => (
+          <div
+            key={i}
+            className="border-border/40 bg-background/40 rounded-lg border p-2"
+          >
+            <p className={cn('font-bold', eyebrowClass(c.variant))}>{label}</p>
+            {val && <p className="mt-1">{val as string}</p>}
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function OrgChartSlide({ c }: { c: Content }) {
+  const reports: Content[] = c.reports ?? [];
+  return (
+    <Surface variant={c.variant} className="items-center">
+      <div className="bg-primary text-primary-foreground rounded-xl px-6 py-3 text-center">
+        <p className="font-bold">{c.root}</p>
+        {c.rootRole && <p className="text-xs opacity-80">{c.rootRole}</p>}
+      </div>
+      <div className="bg-border/60 my-3 h-5 w-px" />
+      <div className="flex flex-wrap justify-center gap-3">
+        {reports.map((r, i) => (
+          <div
+            key={i}
+            className="border-border/40 bg-background/40 rounded-xl border px-4 py-2 text-center"
+          >
+            <p className="font-medium">{r.name}</p>
+            {r.role && (
+              <p className={cn('text-xs', mutedClass(c.variant))}>{r.role}</p>
+            )}
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function SalesPipelineSlide({ c }: { c: Content }) {
+  const stages: Content[] = c.stages ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'Pipeline'}</H>
+      <div className="flex gap-2">
+        {stages.map((s, i) => (
+          <div
+            key={i}
+            className="border-border/40 bg-background/40 flex-1 rounded-xl border p-3 text-center"
+          >
+            <p className="text-sm font-medium">{s.label}</p>
+            {s.value && <p className="mt-1 text-xl font-bold">{s.value}</p>}
+            {s.count && (
+              <p className={cn('text-xs', mutedClass(c.variant))}>
+                {s.count} deals
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function ChannelMixSlide({ c }: { c: Content }) {
+  return (
+    <BarsSlide
+      variant={c.variant}
+      heading={c.heading ?? 'Channels'}
+      rows={(c.channels ?? []).map((x: Content) => ({
+        label: x.label,
+        value: x.value,
+      }))}
+    />
+  );
+}
+function TechRadarSlide({ c }: { c: Content }) {
+  const items: Content[] = c.items ?? [];
+  const rings = ['adopt', 'trial', 'assess', 'hold'];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'Tech radar'}</H>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {rings.map((ring) => {
+          const list = items.filter((it) => (it.ring ?? 'assess') === ring);
+          return (
+            <div key={ring}>
+              <p
+                className={cn(
+                  'mb-1.5 text-sm font-bold capitalize',
+                  eyebrowClass(c.variant)
+                )}
+              >
+                {ring}
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {list.map((it, i) => (
+                  <span
+                    key={i}
+                    className="bg-primary/15 text-primary rounded px-1.5 py-0.5 text-xs"
+                  >
+                    {it.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Surface>
+  );
+}
+function ArchitectureSlide({ c }: { c: Content }) {
+  const layers: Content[] = c.layers ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'Architecture'}</H>
+      <div className="space-y-2">
+        {layers.map((l, i) => (
+          <div
+            key={i}
+            className="border-border/40 bg-background/40 flex items-center gap-4 rounded-xl border p-3"
+          >
+            <span
+              className={cn('w-32 shrink-0 font-bold', eyebrowClass(c.variant))}
+            >
+              {l.label}
+            </span>
+            {l.components && (
+              <span className={cn('text-sm', mutedClass(c.variant))}>
+                {l.components}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+function UserFlowSlide({ c }: { c: Content }) {
+  const steps: string[] = c.steps ?? [];
+  return (
+    <Surface variant={c.variant}>
+      <H>{c.heading ?? 'User flow'}</H>
+      <div className="flex flex-wrap items-center gap-2">
+        {steps.map((s, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <span className="border-border/40 bg-background/40 rounded-lg border px-3 py-2 font-medium">
+              {s}
+            </span>
+            {i < steps.length - 1 && (
+              <span className={eyebrowClass(c.variant)}>→</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+
 const RENDERERS: Record<string, (c: Content) => React.ReactNode> = {
+  embed: (c) => <EmbedSlide c={c} />,
+  storyboard: (c) => <StoryboardSlide c={c} />,
+  funnel: (c) => <FunnelSlide c={c} />,
+  gauge: (c) => <GaugeSlide c={c} />,
+  customerJourney: (c) => <CustomerJourneySlide c={c} />,
+  waterfall: (c) => <WaterfallSlide c={c} />,
+  metricDashboard: (c) => <MetricDashboardSlide c={c} />,
+  trafficLight: (c) => <TrafficLightSlide c={c} />,
+  gantt: (c) => <GanttSlide c={c} />,
+  kanban: (c) => <KanbanSlide c={c} />,
+  milestonePlan: (c) => <MilestonePlanSlide c={c} />,
+  dependencyMap: (c) => <DependencyMapSlide c={c} />,
+  businessModelCanvas: (c) => <BusinessModelCanvasSlide c={c} />,
+  orgChart: (c) => <OrgChartSlide c={c} />,
+  salesPipeline: (c) => <SalesPipelineSlide c={c} />,
+  channelMix: (c) => <ChannelMixSlide c={c} />,
+  techRadar: (c) => <TechRadarSlide c={c} />,
+  architecture: (c) => <ArchitectureSlide c={c} />,
+  userFlow: (c) => <UserFlowSlide c={c} />,
   roadmap: (c) => <RoadmapSlide c={c} />,
   services: (c) => <ServicesSlide c={c} />,
   pricing: (c) => <PricingSlide c={c} />,
