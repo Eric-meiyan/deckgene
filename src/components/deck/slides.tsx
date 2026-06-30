@@ -838,13 +838,17 @@ function PullQuoteWallSlide({ c }: { c: Content }) {
       : c.align === 'right'
         ? 'text-right'
         : 'text-left';
-  const size =
-    c.size === 'sm' ? 'text-lg' : c.size === 'lg' ? 'text-4xl' : 'text-2xl';
+  const sizeStyle =
+    typeof c.size === 'number' ? { fontSize: `${c.size}px` } : undefined;
   return (
     <Surface variant={c.variant}>
       <div className={cn('space-y-4', align)}>
         {quotes.map((q, i) => (
-          <p key={i} className={cn('font-medium', size)}>
+          <p
+            key={i}
+            className={cn('font-medium', !sizeStyle && 'text-2xl')}
+            style={sizeStyle}
+          >
             “{q.text}”
             {q.author && (
               <span className={cn('ml-2 text-sm', mutedClass(c.variant))}>
