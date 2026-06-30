@@ -932,5 +932,9 @@
   "settings.deck_editor.apply_json": "Apply JSON",
   "settings.nav.docs": "Docs",
   "settings.deck_editor.brand": "Brand",
-  "settings.deck_editor.brand_none": "No brand"
+  "settings.deck_editor.brand_none": "No brand",
+  "settings.nav.library": "Slide library",
+  "settings.library.title": "Slide library",
+  "settings.library.subtitle": "Browse all slide types and what each looks like.",
+  "settings.library.search": "Search slide types…"
 }

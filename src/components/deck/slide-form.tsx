@@ -186,6 +186,68 @@ export function describeSlideSchema(slideType: string): Field[] {
     .filter(Boolean) as Field[];
 }
 
+// ─── 自动示例内容（页型库预览用）─────────────────────────────────────────────
+
+function sampleVal(f: Field, idx = 0): unknown {
+  switch (f.kind) {
+    case 'string': {
+      if (f.name === 'variant') return undefined; // 用默认表面
+      const n = f.name.toLowerCase();
+      if (n.includes('image') || n.includes('url') || n.includes('avatar'))
+        return `https://picsum.photos/seed/${f.name}${idx}/800/450`;
+      if (n === 'email') return 'hello@example.com';
+      return f.long
+        ? `${f.label}${tt('：这里是一段示例说明文字。', ': sample description text goes here.')}`
+        : f.label;
+    }
+    case 'number':
+      return [68, 45, 82, 30, 55, 20][idx % 6];
+    case 'enum':
+      // 表面色调留空（用默认），其余取首个枚举值
+      return f.name === 'variant' ? undefined : f.values?.[0];
+    case 'array-string':
+      return [1, 2, 3].map((n) => `${f.label} ${n}`);
+    case 'array-object':
+      return [0, 1, 2].map((i) =>
+        Object.fromEntries(
+          (f.fields ?? [])
+            .map((sf) => [sf.name, sampleVal(sf, i)])
+            .filter(([, v]) => v !== undefined)
+        )
+      );
+    case 'object':
+      return Object.fromEntries(
+        (f.fields ?? [])
+          .map((sf) => [sf.name, sampleVal(sf)])
+          .filter(([, v]) => v !== undefined)
+      );
+    default:
+      return undefined;
+  }
+}
+
+// 复杂结构（二维数组等）自动造不出，手动给示例
+const SAMPLE_OVERRIDES: Record<string, Content> = {
+  dataTable: {
+    heading: 'Data table',
+    columns: ['Metric', 'Q1', 'Q2'],
+    rows: [
+      ['Revenue', '120', '180'],
+      ['Users', '1.2k', '2.0k'],
+    ],
+  },
+};
+
+/** 按 schema 自动生成一份占位内容，用于预览该页型长什么样。 */
+export function sampleSlideContent(slideType: string): Content {
+  const out: Content = {};
+  for (const f of describeSlideSchema(slideType)) {
+    const v = sampleVal(f);
+    if (v !== undefined) out[f.name] = v;
+  }
+  return { ...out, ...(SAMPLE_OVERRIDES[slideType] ?? {}) };
+}
+
 // ─── 渲染 ────────────────────────────────────────────────────────────────────
 
 type Content = Record<string, unknown>;

@@ -6,6 +6,7 @@ import {
   Home,
   Key,
   LayoutDashboard,
+  LayoutGrid,
   LayoutTemplate,
   LifeBuoy,
   Palette,
@@ -50,6 +51,12 @@ function SettingsLayout() {
       href: '/settings/templates',
       label: m['settings.nav.templates'](),
       icon: LayoutTemplate,
+      group,
+    },
+    {
+      href: '/settings/library',
+      label: m['settings.nav.library'](),
+      icon: LayoutGrid,
       group,
     },
     {

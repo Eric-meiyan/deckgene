@@ -932,5 +932,9 @@
   "settings.deck_editor.apply_json": "应用 JSON",
   "settings.nav.docs": "文档",
   "settings.deck_editor.brand": "品牌",
-  "settings.deck_editor.brand_none": "无品牌"
+  "settings.deck_editor.brand_none": "无品牌",
+  "settings.nav.library": "页型库",
+  "settings.library.title": "页型库",
+  "settings.library.subtitle": "浏览全部页型，看看每个长什么样。",
+  "settings.library.search": "搜索页型…"
 }
