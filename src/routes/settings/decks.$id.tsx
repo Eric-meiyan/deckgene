@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 
 import { Link } from '@/core/i18n/navigation';
 import { listSlideTemplates } from '@/modules/deck/templates/registry';
+import { slideName, slideWhen } from '@/modules/deck/templates/zh';
 import { apiDelete, apiGet, apiPatch, apiPost } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
@@ -502,7 +503,9 @@ function SlidePicker({
         (t) =>
           t.key.toLowerCase().includes(s) ||
           t.name.toLowerCase().includes(s) ||
-          t.whenToUse.toLowerCase().includes(s)
+          t.whenToUse.toLowerCase().includes(s) ||
+          slideName(t.key, t.name, true).toLowerCase().includes(s) ||
+          slideWhen(t.key, t.whenToUse, true).toLowerCase().includes(s)
       )
     : all;
   const [sel, setSel] = useState(all[0]?.key ?? '');
@@ -540,7 +543,7 @@ function SlidePicker({
                         : 'hover:bg-muted'
                     )}
                   >
-                    {t.name}
+                    {slideName(t.key, t.name, zh)}
                   </button>
                 ))}
               </div>
@@ -559,9 +562,11 @@ function SlidePicker({
           </div>
           <div className="mt-3 flex items-end justify-between gap-4">
             <div className="min-w-0">
-              <p className="font-semibold">{current.name}</p>
+              <p className="font-semibold">
+                {slideName(current.key, current.name, zh)}
+              </p>
               <p className="text-muted-foreground text-xs">
-                {current.whenToUse}
+                {slideWhen(current.key, current.whenToUse, zh)}
               </p>
             </div>
             <Button

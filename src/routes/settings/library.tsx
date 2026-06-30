@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 
 import { listSlideTemplates } from '@/modules/deck/templates/registry';
+import { slideName, slideWhen } from '@/modules/deck/templates/zh';
 import { m } from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
 import { sampleSlideContent } from '@/components/deck/slide-form';
@@ -29,7 +30,9 @@ function LibraryPage() {
       (t) =>
         t.key.toLowerCase().includes(s) ||
         t.name.toLowerCase().includes(s) ||
-        t.whenToUse.toLowerCase().includes(s)
+        t.whenToUse.toLowerCase().includes(s) ||
+        slideName(t.key, t.name, true).toLowerCase().includes(s) ||
+        slideWhen(t.key, t.whenToUse, true).toLowerCase().includes(s)
     );
   }, [q, all]);
 
@@ -67,7 +70,9 @@ function LibraryPage() {
                     {renderSlide(t.key, sampleSlideContent(t.key))}
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{t.name}</span>
+                    <span className="font-medium">
+                      {slideName(t.key, t.name, zh)}
+                    </span>
                     <Badge
                       variant="secondary"
                       className="font-mono text-[10px]"
@@ -75,7 +80,9 @@ function LibraryPage() {
                       {t.key}
                     </Badge>
                   </div>
-                  <p className="text-muted-foreground text-xs">{t.whenToUse}</p>
+                  <p className="text-muted-foreground text-xs">
+                    {slideWhen(t.key, t.whenToUse, zh)}
+                  </p>
                 </div>
               ))}
             </div>
