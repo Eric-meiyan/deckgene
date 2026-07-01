@@ -13,6 +13,14 @@ const surface = z
   .optional()
   .catch(undefined);
 
+// 通用版式微调（每个页型都可用，对内容偏少的页型最有意义）：
+// - indent：内容整块从卡片左内边距再往里缩进多少（px，参照 1280 设计宽）
+// - fontScale：这一页内容整体缩放（%，用 CSS zoom，字与块一起放大/缩小）
+const layoutFields = {
+  indent: z.number().min(0).max(600).optional().catch(undefined),
+  fontScale: z.number().min(50).max(200).optional().catch(undefined),
+};
+
 // 复用：短文本 / 多行文本
 const short = (max: number) => z.string().max(max);
 const long = (max: number) => z.string().max(max);
@@ -1470,7 +1478,7 @@ const canvas: SlideTemplate = {
 };
 
 /** 首批全部模板（注册表数据源）。 */
-export const SLIDE_TEMPLATES: SlideTemplate[] = [
+const RAW_SLIDE_TEMPLATES: SlideTemplate[] = [
   canvas,
   embed,
   storyboard,
@@ -1566,3 +1574,12 @@ export const SLIDE_TEMPLATES: SlideTemplate[] = [
   cta,
   contactCard,
 ];
+
+// 给每个页型的 schema 追加通用版式微调字段（indent / fontScale）。
+// 集中一处 extend：持久化校验、Inspect 自动表单、REST/MCP JSON Schema 同步生效。
+export const SLIDE_TEMPLATES: SlideTemplate[] = RAW_SLIDE_TEMPLATES.map(
+  (t) => ({
+    ...t,
+    schema: (t.schema as z.ZodObject<z.ZodRawShape>).extend(layoutFields),
+  })
+);

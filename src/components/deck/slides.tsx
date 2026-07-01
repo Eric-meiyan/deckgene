@@ -1,4 +1,12 @@
+import { createContext, useContext } from 'react';
+
 import { cn } from '@/lib/utils';
+
+/**
+ * 通用版式微调（每页可选）：indent=内容整块左缩进(px)，fontScale=整页缩放(%)。
+ * 由 renderSlide 从 content 读出并经 context 传给公共 Surface，避免改每个页型组件。
+ */
+const SlideLayout = createContext<{ indent?: number; fontScale?: number }>({});
 
 /**
  * Slide 渲染组件（P1）。每个 slide_type 一个组件，消费 content + playful 主题。
@@ -42,6 +50,23 @@ function Surface({
   children: React.ReactNode;
   className?: string;
 }) {
+  const { indent, fontScale } = useContext(SlideLayout);
+  const tuned = indent != null || fontScale != null;
+  // 仅在设了微调时才包一层，保证未调页型的布局零变化。
+  const content = tuned ? (
+    <div
+      style={
+        {
+          zoom: fontScale != null ? fontScale / 100 : undefined,
+          paddingLeft: indent != null ? `${indent}px` : undefined,
+        } as React.CSSProperties
+      }
+    >
+      {children}
+    </div>
+  ) : (
+    children
+  );
   return (
     <div
       className={cn(
@@ -55,7 +80,7 @@ function Surface({
         className="absolute top-6 right-6 h-7 w-28 bg-contain bg-right bg-no-repeat"
         style={{ backgroundImage: 'var(--brand-logo, none)' }}
       />
-      {children}
+      {content}
     </div>
   );
 }
@@ -2410,5 +2435,15 @@ export function renderSlide(
   content: Record<string, unknown>
 ): React.ReactNode {
   const r = RENDERERS[slideType];
-  return r ? r(content) : <FallbackSlide c={content} type={slideType} />;
+  const node = r ? r(content) : <FallbackSlide c={content} type={slideType} />;
+  const indent =
+    typeof content.indent === 'number' ? content.indent : undefined;
+  const fontScale =
+    typeof content.fontScale === 'number' ? content.fontScale : undefined;
+  if (indent == null && fontScale == null) return node;
+  return (
+    <SlideLayout.Provider value={{ indent, fontScale }}>
+      {node}
+    </SlideLayout.Provider>
+  );
 }

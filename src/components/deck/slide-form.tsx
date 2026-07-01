@@ -43,6 +43,8 @@ const tt = (zh: string, en: string) => (isZh() ? zh : en);
 const LABELS_ZH: Record<string, string> = {
   variant: '表面色调',
   layoutVariant: '版式',
+  indent: '左缩进(px)',
+  fontScale: '整体缩放(%)',
   title: '标题',
   subtitle: '副标题',
   heading: '标题',
@@ -117,6 +119,8 @@ function humanize(k: string) {
 const LABELS_EN: Record<string, string> = {
   variant: 'Surface',
   layoutVariant: 'Layout',
+  indent: 'Left indent (px)',
+  fontScale: 'Scale (%)',
 };
 function labelFor(k: string) {
   return isZh() ? (LABELS_ZH[k] ?? humanize(k)) : (LABELS_EN[k] ?? humanize(k));
@@ -214,6 +218,8 @@ function sampleVal(f: Field, idx = 0): unknown {
         : f.label;
     }
     case 'number':
+      // 版式微调字段不进样例，避免污染页型库预览（默认无缩进/缩放）
+      if (f.name === 'indent' || f.name === 'fontScale') return undefined;
       return [68, 45, 82, 30, 55, 20][idx % 6];
     case 'enum':
       // 表面色调留空（用默认），其余取首个枚举值
