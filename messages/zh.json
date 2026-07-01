@@ -958,5 +958,9 @@
   "settings.deck_editor.insert_below": "在下方插入页",
   "settings.deck_editor.edit_canvas": "编辑画布",
   "settings.deck_editor.canvas_close": "关闭",
-  "settings.deck_editor.canvas_empty": "空白画布——点「编辑画布」开始绘制。"
+  "settings.deck_editor.canvas_empty": "空白画布——点「编辑画布」开始绘制。",
+  "settings.deck_editor.inspect": "编辑",
+  "settings.deck_editor.collapse_panel": "收起编辑面板",
+  "settings.deck_editor.expand_panel": "展开编辑面板",
+  "settings.deck_editor.pick_slide": "点选左侧任意一页开始编辑"
 }

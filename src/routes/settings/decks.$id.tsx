@@ -16,11 +16,22 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Play, Plus, Sparkles, Trash2 } from 'lucide-react';
+import {
+  GripVertical,
+  PanelRightClose,
+  PanelRightOpen,
+  Play,
+  Plus,
+  Sparkles,
+  Trash2,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Link } from '@/core/i18n/navigation';
-import { listSlideTemplates } from '@/modules/deck/templates/registry';
+import {
+  getSlideTemplate,
+  listSlideTemplates,
+} from '@/modules/deck/templates/registry';
 import { slideName, slideWhen } from '@/modules/deck/templates/zh';
 import { apiDelete, apiGet, apiPatch, apiPost } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
@@ -101,18 +112,26 @@ function brandStyle(
   return s as React.CSSProperties;
 }
 
-function SlideEditor({
-  deckId,
+/** 中间栏：一张幻灯片的紧凑预览卡（可拖拽排序 / 点选 / 删除 / 下方插入）。 */
+function SlidePreviewCard({
   slide,
+  index,
+  content,
   previewStyle,
+  selected,
+  onSelect,
   onInsertBelow,
+  onDelete,
 }: {
-  deckId: string;
   slide: SlideDTO;
+  index: number;
+  content: Record<string, unknown>;
   previewStyle?: React.CSSProperties;
+  selected: boolean;
+  onSelect: () => void;
   onInsertBelow?: () => void;
+  onDelete: () => void;
 }) {
-  const qc = useQueryClient();
   const {
     attributes,
     listeners,
@@ -121,15 +140,90 @@ function SlideEditor({
     transition,
     isDragging,
   } = useSortable({ id: slide.id });
-  const [content, setContent] = useState<Record<string, unknown>>(
-    slide.content
+  return (
+    <Card
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      onClick={onSelect}
+      className={cn(
+        'cursor-pointer transition',
+        isDragging && 'opacity-60 shadow-lg',
+        selected ? 'ring-primary ring-2' : 'hover:ring-border hover:ring-1'
+      )}
+    >
+      <CardContent className="space-y-2 py-3">
+        <div className="flex items-center gap-2">
+          <button
+            className="text-muted-foreground hover:text-foreground cursor-grab"
+            onClick={(e) => e.stopPropagation()}
+            {...attributes}
+            {...listeners}
+            aria-label="reorder"
+          >
+            <GripVertical className="size-4" />
+          </button>
+          <Badge variant="secondary">{slide.slide_type}</Badge>
+          <span className="text-muted-foreground text-xs">#{index + 1}</span>
+          <button
+            className="text-muted-foreground hover:text-destructive ml-auto"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            aria-label="delete"
+          >
+            <Trash2 className="size-4" />
+          </button>
+        </div>
+
+        {/* 预览（选中页由右侧表单实时驱动，套用所选品牌色） */}
+        <div
+          className="deck-fonts overflow-hidden rounded-xl border"
+          style={previewStyle}
+        >
+          {renderSlide(slide.slide_type, content)}
+        </div>
+
+        {onInsertBelow && (
+          <button
+            className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs"
+            onClick={(e) => {
+              e.stopPropagation();
+              onInsertBelow();
+            }}
+          >
+            <Plus className="size-3.5" />
+            {m['settings.deck_editor.insert_below']()}
+          </button>
+        )}
+      </CardContent>
+    </Card>
   );
+}
+
+/** 右侧栏：编辑当前选中页（AI 改写 / 表单 / 高级 JSON / 保存）。按 slide.id remount。 */
+function InspectPanel({
+  deckId,
+  slide,
+  content,
+  onChange,
+  onSaved,
+}: {
+  deckId: string;
+  slide: SlideDTO;
+  content: Record<string, unknown>;
+  onChange: (c: Record<string, unknown>) => void;
+  onSaved: () => void;
+}) {
+  const qc = useQueryClient();
+  const zh = getLocale() === 'zh';
+  const tpl = getSlideTemplate(slide.slide_type);
   const [instruction, setInstruction] = useState('');
   const [showJson, setShowJson] = useState(false);
   const [canvasOpen, setCanvasOpen] = useState(false);
   const isCanvas = slide.slide_type === 'canvas';
   const [jsonDraft, setJsonDraft] = useState(() =>
-    JSON.stringify(slide.content, null, 2)
+    JSON.stringify(content, null, 2)
   );
   let jsonError = false;
   try {
@@ -145,14 +239,7 @@ function SlideEditor({
       }),
     onSuccess: () => {
       toast.success(m['settings.deck_editor.saved']());
-      qc.invalidateQueries({ queryKey: ['deck', deckId] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-  const del = useMutation({
-    mutationFn: () => apiDelete(`/api/decks/${deckId}/slides/${slide.id}`),
-    onSuccess: () => {
-      toast.success(m['settings.deck_editor.deleted']());
+      onSaved();
       qc.invalidateQueries({ queryKey: ['deck', deckId] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -164,7 +251,7 @@ function SlideEditor({
         { instruction }
       ),
     onSuccess: (s) => {
-      setContent(s.content);
+      onChange(s.content);
       setJsonDraft(JSON.stringify(s.content, null, 2));
       setInstruction('');
       toast.success(m['settings.deck_editor.ai_iterated']());
@@ -174,171 +261,137 @@ function SlideEditor({
   });
 
   return (
-    <Card
-      ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn(isDragging && 'opacity-60 shadow-lg')}
-    >
-      <CardContent className="space-y-2 py-3">
+    <div className="space-y-3">
+      <div>
         <div className="flex items-center gap-2">
-          <button
-            className="text-muted-foreground hover:text-foreground cursor-grab"
-            {...attributes}
-            {...listeners}
-            aria-label="reorder"
-          >
-            <GripVertical className="size-4" />
-          </button>
           <Badge variant="secondary">{slide.slide_type}</Badge>
-          <span className="text-muted-foreground text-xs">#{slide.order}</span>
-          <button
-            className="text-muted-foreground hover:text-destructive ml-auto"
-            onClick={() => del.mutate()}
-            aria-label="delete"
+          <span className="font-semibold">
+            {slideName(slide.slide_type, tpl?.name ?? slide.slide_type, zh)}
+          </span>
+        </div>
+        {tpl?.whenToUse && (
+          <p className="text-muted-foreground mt-1 text-xs">
+            {slideWhen(slide.slide_type, tpl.whenToUse, zh)}
+          </p>
+        )}
+      </div>
+
+      {isCanvas ? (
+        <>
+          <Button
+            variant="secondary"
+            className="w-full gap-1"
+            onClick={() => setCanvasOpen(true)}
           >
-            <Trash2 className="size-4" />
-          </button>
-        </div>
-
-        {/* 实时预览（由表单内容驱动，套用所选品牌色） */}
-        <div
-          className="deck-fonts overflow-hidden rounded-xl border"
-          style={previewStyle}
-        >
-          {renderSlide(slide.slide_type, content)}
-        </div>
-
-        {isCanvas ? (
-          /* 画布页：编辑画布按钮（全屏 Excalidraw） */
-          <>
-            <Button
-              variant="secondary"
-              className="gap-1"
-              onClick={() => setCanvasOpen(true)}
-            >
-              {m['settings.deck_editor.edit_canvas']()}
-            </Button>
-            {canvasOpen && (
-              <Suspense fallback={null}>
-                <ExcalidrawCanvas
+            {m['settings.deck_editor.edit_canvas']()}
+          </Button>
+          {canvasOpen && (
+            <Suspense fallback={null}>
+              <ExcalidrawCanvas
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                initial={(content.scene as any) ?? null}
+                onClose={() => setCanvasOpen(false)}
+                onSave={({
+                  scene,
+                  png,
+                  svg,
+                }: {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  initial={(content.scene as any) ?? null}
-                  onClose={() => setCanvasOpen(false)}
-                  onSave={({
-                    scene,
-                    png,
-                    svg,
-                  }: {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    scene: any;
-                    png: string;
-                    svg: string;
-                  }) => {
-                    const nc = { ...content, scene, png, svg };
-                    setContent(nc);
-                    setJsonDraft(JSON.stringify({ scene: '…' }, null, 2));
-                    save.mutate(nc);
-                    setCanvasOpen(false);
-                  }}
-                />
-              </Suspense>
-            )}
-          </>
-        ) : (
-          <>
-            {/* 单页 AI 改写 */}
-            <div className="flex items-center gap-2">
-              <Input
-                className="h-8"
-                placeholder={m['settings.deck_editor.ai_iterate_ph']()}
-                value={instruction}
-                onChange={(e) => setInstruction(e.target.value)}
-                onKeyDown={(e) => {
-                  if (
-                    e.key === 'Enter' &&
-                    instruction.trim() &&
-                    !iterate.isPending
-                  )
-                    iterate.mutate();
+                  scene: any;
+                  png: string;
+                  svg: string;
+                }) => {
+                  const nc = { ...content, scene, png, svg };
+                  onChange(nc);
+                  setJsonDraft(JSON.stringify({ scene: '…' }, null, 2));
+                  save.mutate(nc);
+                  setCanvasOpen(false);
                 }}
               />
-              <Button
-                size="sm"
-                variant="secondary"
-                className="shrink-0 gap-1"
-                disabled={!instruction.trim() || iterate.isPending}
-                onClick={() => iterate.mutate()}
-              >
-                <Sparkles className="size-4" />
-                {iterate.isPending
-                  ? m['settings.deck_editor.ai_iterating']()
-                  : m['settings.deck_editor.ai_iterate_btn']()}
-              </Button>
-            </div>
-
-            {/* 表单式编辑 */}
-            <SlideForm
-              slideType={slide.slide_type}
-              content={content}
-              onChange={setContent}
+            </Suspense>
+          )}
+        </>
+      ) : (
+        <>
+          {/* 单页 AI 改写 */}
+          <div className="flex items-center gap-2">
+            <Input
+              className="h-8"
+              placeholder={m['settings.deck_editor.ai_iterate_ph']()}
+              value={instruction}
+              onChange={(e) => setInstruction(e.target.value)}
+              onKeyDown={(e) => {
+                if (
+                  e.key === 'Enter' &&
+                  instruction.trim() &&
+                  !iterate.isPending
+                )
+                  iterate.mutate();
+              }}
             />
-          </>
-        )}
-
-        {/* 高级：原始 JSON */}
-        <div>
-          <button
-            className="text-muted-foreground hover:text-foreground text-xs"
-            onClick={() => {
-              if (!showJson) setJsonDraft(JSON.stringify(content, null, 2));
-              setShowJson((v) => !v);
-            }}
-          >
-            {showJson ? '▾ ' : '▸ '}
-            {m['settings.deck_editor.advanced_json']()}
-          </button>
-          {showJson && (
-            <div className="mt-2 space-y-2">
-              <Textarea
-                rows={8}
-                className="font-mono text-xs"
-                value={jsonDraft}
-                onChange={(e) => setJsonDraft(e.target.value)}
-              />
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={jsonError}
-                onClick={() => setContent(JSON.parse(jsonDraft))}
-              >
-                {m['settings.deck_editor.apply_json']()}
-              </Button>
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between">
-          {onInsertBelow ? (
-            <button
-              className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs"
-              onClick={onInsertBelow}
+            <Button
+              size="sm"
+              variant="secondary"
+              className="shrink-0 gap-1"
+              disabled={!instruction.trim() || iterate.isPending}
+              onClick={() => iterate.mutate()}
             >
-              <Plus className="size-3.5" />
-              {m['settings.deck_editor.insert_below']()}
-            </button>
-          ) : (
-            <span />
-          )}
-          <Button
-            size="sm"
-            disabled={save.isPending}
-            onClick={() => save.mutate(undefined)}
-          >
-            {m['settings.deck_editor.save']()}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+              <Sparkles className="size-4" />
+              {iterate.isPending
+                ? m['settings.deck_editor.ai_iterating']()
+                : m['settings.deck_editor.ai_iterate_btn']()}
+            </Button>
+          </div>
+
+          {/* 表单式编辑 */}
+          <SlideForm
+            slideType={slide.slide_type}
+            content={content}
+            onChange={onChange}
+          />
+        </>
+      )}
+
+      {/* 高级：原始 JSON */}
+      <div>
+        <button
+          className="text-muted-foreground hover:text-foreground text-xs"
+          onClick={() => {
+            if (!showJson) setJsonDraft(JSON.stringify(content, null, 2));
+            setShowJson((v) => !v);
+          }}
+        >
+          {showJson ? '▾ ' : '▸ '}
+          {m['settings.deck_editor.advanced_json']()}
+        </button>
+        {showJson && (
+          <div className="mt-2 space-y-2">
+            <Textarea
+              rows={8}
+              className="font-mono text-xs"
+              value={jsonDraft}
+              onChange={(e) => setJsonDraft(e.target.value)}
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={jsonError}
+              onClick={() => onChange(JSON.parse(jsonDraft))}
+            >
+              {m['settings.deck_editor.apply_json']()}
+            </Button>
+          </div>
+        )}
+      </div>
+
+      <Button
+        className="w-full"
+        disabled={save.isPending}
+        onClick={() => save.mutate(undefined)}
+      >
+        {m['settings.deck_editor.save']()}
+      </Button>
+    </div>
   );
 }
 
@@ -350,6 +403,12 @@ function DeckEditorPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [addQ, setAddQ] = useState('');
   const [addAt, setAddAt] = useState<number | undefined>(undefined);
+  const [selectedId, setSelectedId] = useState('');
+  const [collapsed, setCollapsed] = useState(false);
+  // 每页的未保存编辑草稿（键=slide.id）；未选中/未改动的页回退到已保存内容。
+  const [drafts, setDrafts] = useState<Record<string, Record<string, unknown>>>(
+    {}
+  );
 
   const deckQ = useQuery({
     queryKey: ['deck', id],
@@ -367,7 +426,11 @@ function DeckEditorPage() {
   });
 
   useEffect(() => {
-    if (deckQ.data) setOrder(deckQ.data.slides.map((s) => s.id));
+    if (deckQ.data) {
+      const ids = deckQ.data.slides.map((s) => s.id);
+      setOrder(ids);
+      setSelectedId((cur) => (cur && ids.includes(cur) ? cur : (ids[0] ?? '')));
+    }
   }, [deckQ.data]);
 
   const reorder = useMutation({
@@ -395,6 +458,34 @@ function DeckEditorPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['deck', id] }),
     onError: (e: Error) => toast.error(e.message),
   });
+  const delSlide = useMutation({
+    mutationFn: (slideId: string) =>
+      apiDelete(`/api/decks/${id}/slides/${slideId}`),
+    onSuccess: (_d, slideId) => {
+      toast.success(m['settings.deck_editor.deleted']());
+      if (slideId === selectedId) {
+        const i = order.indexOf(slideId);
+        setSelectedId(order[i + 1] ?? order[i - 1] ?? '');
+      }
+      setDrafts((d) => {
+        const n = { ...d };
+        delete n[slideId];
+        return n;
+      });
+      qc.invalidateQueries({ queryKey: ['deck', id] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const draftFor = (s: SlideDTO) => drafts[s.id] ?? s.content;
+  const setDraft = (sid: string, c: Record<string, unknown>) =>
+    setDrafts((d) => ({ ...d, [sid]: c }));
+  const clearDraft = (sid: string) =>
+    setDrafts((d) => {
+      const n = { ...d };
+      delete n[sid];
+      return n;
+    });
 
   const deck = deckQ.data;
   if (deckQ.isError)
@@ -415,6 +506,7 @@ function DeckEditorPage() {
     currentBrand?.typography,
     currentBrand?.logo_url
   );
+  const selected = ordered.find((s) => s.id === selectedId) ?? null;
 
   function onDragEnd(e: DragEndEvent) {
     const { active, over } = e;
@@ -518,47 +610,106 @@ function DeckEditorPage() {
         </div>
       </div>
 
-      <p className="text-muted-foreground text-xs">
-        {m['settings.deck_editor.reorder_hint']()}
-      </p>
+      <div className="flex gap-4">
+        {/* 中间：可滚动的幻灯片预览列表 */}
+        <div className="min-w-0 flex-1 space-y-3">
+          <p className="text-muted-foreground text-xs">
+            {m['settings.deck_editor.reorder_hint']()}
+          </p>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={onDragEnd}
+          >
+            <SortableContext
+              items={order}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-3">
+                {ordered.map((s, idx) => (
+                  <SlidePreviewCard
+                    key={s.id}
+                    slide={s}
+                    index={idx}
+                    content={draftFor(s)}
+                    previewStyle={previewStyle}
+                    selected={s.id === selectedId}
+                    onSelect={() => setSelectedId(s.id)}
+                    onDelete={() => delSlide.mutate(s.id)}
+                    onInsertBelow={() => {
+                      setAddAt(idx + 1);
+                      setAddQ('');
+                      setAddOpen(true);
+                    }}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={onDragEnd}
-      >
-        <SortableContext items={order} strategy={verticalListSortingStrategy}>
-          <div className="space-y-3">
-            {ordered.map((s, idx) => (
-              <SlideEditor
-                key={s.id}
-                deckId={id}
-                slide={s}
-                previewStyle={previewStyle}
-                onInsertBelow={() => {
-                  setAddAt(idx + 1);
-                  setAddQ('');
-                  setAddOpen(true);
-                }}
-              />
-            ))}
+          {/* 新增页：缩略图挑选器 */}
+          <Button
+            variant="outline"
+            className="gap-1"
+            onClick={() => {
+              setAddAt(undefined);
+              setAddQ('');
+              setAddOpen(true);
+            }}
+          >
+            <Plus className="size-4" />
+            {m['settings.deck_editor.add']()}
+          </Button>
+        </div>
+
+        {/* 右侧：可收起的 Inspect 编辑面板（sticky，随列表滚动常驻） */}
+        {collapsed ? (
+          <div className="shrink-0">
+            <Button
+              variant="outline"
+              size="icon"
+              className="sticky top-4"
+              aria-label={m['settings.deck_editor.expand_panel']()}
+              onClick={() => setCollapsed(false)}
+            >
+              <PanelRightOpen className="size-4" />
+            </Button>
           </div>
-        </SortableContext>
-      </DndContext>
-
-      {/* 新增页：缩略图挑选器 */}
-      <Button
-        variant="outline"
-        className="gap-1"
-        onClick={() => {
-          setAddAt(undefined);
-          setAddQ('');
-          setAddOpen(true);
-        }}
-      >
-        <Plus className="size-4" />
-        {m['settings.deck_editor.add']()}
-      </Button>
+        ) : (
+          <div className="w-[360px] shrink-0">
+            <Card className="sticky top-4 max-h-[calc(100vh-6rem)] overflow-auto">
+              <CardContent className="space-y-3 py-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold">
+                    {m['settings.deck_editor.inspect']()}
+                  </span>
+                  <button
+                    className="text-muted-foreground hover:text-foreground"
+                    aria-label={m['settings.deck_editor.collapse_panel']()}
+                    onClick={() => setCollapsed(true)}
+                  >
+                    <PanelRightClose className="size-4" />
+                  </button>
+                </div>
+                {selected ? (
+                  <InspectPanel
+                    key={selected.id}
+                    deckId={id}
+                    slide={selected}
+                    content={draftFor(selected)}
+                    onChange={(c) => setDraft(selected.id, c)}
+                    onSaved={() => clearDraft(selected.id)}
+                  />
+                ) : (
+                  <p className="text-muted-foreground text-sm">
+                    {m['settings.deck_editor.pick_slide']()}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent className="max-h-[92vh] w-[94vw] overflow-hidden sm:max-w-[1500px]">
