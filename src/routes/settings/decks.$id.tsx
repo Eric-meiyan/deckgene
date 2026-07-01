@@ -519,8 +519,10 @@ function DeckEditorPage() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    // 固定为一屏高的 flex 列：顶部工具条 + 下方独立滚动的双栏，
+    // 右侧 Inspect 面板始终在视口内（不用 sticky，避免祖先 overflow 导致失效）。
+    <div className="flex h-[calc(100dvh-3.5rem)] flex-col gap-4 p-4 md:p-6">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <Link
             href="/settings/decks"
@@ -610,9 +612,9 @@ function DeckEditorPage() {
         </div>
       </div>
 
-      <div className="flex gap-4">
-        {/* 中间：可滚动的幻灯片预览列表 */}
-        <div className="min-w-0 flex-1 space-y-3">
+      <div className="flex min-h-0 flex-1 gap-4">
+        {/* 中间：独立滚动的幻灯片预览列表 */}
+        <div className="min-w-0 flex-1 space-y-3 overflow-y-auto pr-1">
           <p className="text-muted-foreground text-xs">
             {m['settings.deck_editor.reorder_hint']()}
           </p>
@@ -662,13 +664,12 @@ function DeckEditorPage() {
           </Button>
         </div>
 
-        {/* 右侧：可收起的 Inspect 编辑面板（sticky，随列表滚动常驻） */}
+        {/* 右侧：可收起的 Inspect 编辑面板（独立滚动，始终在视口内） */}
         {collapsed ? (
           <div className="shrink-0">
             <Button
               variant="outline"
               size="icon"
-              className="sticky top-4"
               aria-label={m['settings.deck_editor.expand_panel']()}
               onClick={() => setCollapsed(false)}
             >
@@ -676,8 +677,8 @@ function DeckEditorPage() {
             </Button>
           </div>
         ) : (
-          <div className="w-[360px] shrink-0">
-            <Card className="sticky top-4 max-h-[calc(100vh-6rem)] overflow-auto">
+          <div className="w-[360px] shrink-0 overflow-y-auto">
+            <Card>
               <CardContent className="space-y-3 py-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold">
