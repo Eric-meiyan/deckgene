@@ -153,7 +153,7 @@ function LibraryPage() {
       })}
 
       <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}>
-        <DialogContent className="w-[94vw] max-w-5xl">
+        <DialogContent className="w-[85vw] max-w-none sm:max-w-none">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {preview && slideName(preview.key, preview.name, zh)}
@@ -166,13 +166,18 @@ function LibraryPage() {
           </DialogHeader>
           {preview && (
             <div className="space-y-3">
-              <div className="overflow-hidden rounded-xl border">
+              {/* 按屏高约束宽度：16:9 大图既尽量填满、又不超出竖直方向
+                  （减去标题栏 + 说明 + 弹窗内边距，约 180px）。 */}
+              <div
+                className="mx-auto w-full overflow-hidden rounded-xl border"
+                style={{ maxWidth: 'calc((85vh - 180px) * 16 / 9)' }}
+              >
                 <ScaledPreview
                   slideKey={preview.key}
                   content={sampleSlideContent(preview.key)}
                 />
               </div>
-              <p className="text-muted-foreground text-sm">
+              <p className="text-muted-foreground text-center text-sm">
                 {slideWhen(preview.key, preview.whenToUse, zh)}
               </p>
             </div>
