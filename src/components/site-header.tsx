@@ -30,7 +30,7 @@ export function SiteHeader({ navLinks }: { navLinks?: NavLink[] }) {
 
   return (
     <header className="bg-background/80 sticky top-0 z-50 w-full backdrop-blur-sm">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+      <div className="mx-auto grid h-16 max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-4 sm:px-6">
         {/* Brand */}
         <Link href="/" className="flex items-center">
           <span className="font-serif text-lg italic">
@@ -64,33 +64,43 @@ export function SiteHeader({ navLinks }: { navLinks?: NavLink[] }) {
           )}
         </nav>
 
-        {/* Desktop actions */}
-        <div className="hidden items-center gap-3 md:flex">
-          <LocaleSelector />
-          <ThemeToggle />
-          {user ? (
-            <SiteUserMenu
-              name={user.name || 'User'}
-              email={user.email}
-              image={user.image}
-            />
-          ) : (
-            <Link href="/settings" className={cn(buttonVariants(), 'gap-1.5')}>
-              {m['common.nav.get_started']()}
-              <ArrowRight className="size-4" />
-            </Link>
-          )}
-        </div>
+        {/* Right group (col3, aligned to the far right so nav stays centered) */}
+        <div className="flex items-center justify-end gap-3">
+          {/* Desktop actions */}
+          <div className="hidden items-center gap-3 md:flex">
+            <LocaleSelector />
+            <ThemeToggle />
+            {user ? (
+              <SiteUserMenu
+                name={user.name || 'User'}
+                email={user.email}
+                image={user.image}
+              />
+            ) : (
+              <Link
+                href="/settings"
+                className={cn(buttonVariants(), 'gap-1.5')}
+              >
+                {m['common.nav.get_started']()}
+                <ArrowRight className="size-4" />
+              </Link>
+            )}
+          </div>
 
-        {/* Mobile toggle */}
-        <button
-          className="p-2 md:hidden"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-          aria-expanded={mobileOpen}
-        >
-          {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-        </button>
+          {/* Mobile toggle */}
+          <button
+            className="p-2 md:hidden"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileOpen}
+          >
+            {mobileOpen ? (
+              <X className="size-5" />
+            ) : (
+              <Menu className="size-5" />
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}

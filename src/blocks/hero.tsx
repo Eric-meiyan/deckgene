@@ -8,7 +8,7 @@ import { DotPattern } from '@/components/ui/dot-pattern';
 
 export function Hero() {
   return (
-    <section className="relative isolate flex flex-col items-center justify-center overflow-hidden px-4 pt-24 pb-20 sm:pt-40 sm:pb-32">
+    <section className="relative isolate flex flex-col items-center justify-center overflow-hidden px-4 pt-12 pb-20 sm:pt-20 sm:pb-32">
       <DotPattern
         className={cn(
           '[mask-image:radial-gradient(ellipse_at_center,white,transparent_75%)]',
