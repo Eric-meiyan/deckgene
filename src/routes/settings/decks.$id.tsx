@@ -179,7 +179,7 @@ function SlideEditor({
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(isDragging && 'opacity-60 shadow-lg')}
     >
-      <CardContent className="space-y-3 py-4">
+      <CardContent className="space-y-2 py-3">
         <div className="flex items-center gap-2">
           <button
             className="text-muted-foreground hover:text-foreground cursor-grab"
@@ -249,6 +249,7 @@ function SlideEditor({
             {/* 单页 AI 改写 */}
             <div className="flex items-center gap-2">
               <Input
+                className="h-8"
                 placeholder={m['settings.deck_editor.ai_iterate_ph']()}
                 value={instruction}
                 onChange={(e) => setInstruction(e.target.value)}

@@ -286,7 +286,7 @@ function Scalar({
         value={(value as string) ?? ''}
         onValueChange={(v) => onChange(v || undefined)}
       >
-        <SelectTrigger className="h-8">
+        <SelectTrigger className="h-7">
           <SelectValue
             placeholder={
               field.optional ? tt('默认', 'Default') : tt('选择', 'Select')
@@ -318,7 +318,7 @@ function Scalar({
     return (
       <Input
         type="number"
-        className="h-8"
+        className="h-7"
         value={value === undefined || value === null ? '' : String(value)}
         onChange={(e) =>
           onChange(e.target.value === '' ? undefined : Number(e.target.value))
@@ -330,6 +330,7 @@ function Scalar({
     return (
       <Textarea
         rows={2}
+        className="min-h-0 py-1.5"
         value={(value as string) ?? ''}
         onChange={(e) => onChange(e.target.value || undefined)}
       />
@@ -337,7 +338,7 @@ function Scalar({
   }
   return (
     <Input
-      className="h-8"
+      className="h-7"
       value={(value as string) ?? ''}
       onChange={(e) => onChange(e.target.value || undefined)}
     />
@@ -413,7 +414,7 @@ function FieldRow({
         {rows.map((row, i) => (
           <div key={i} className="flex items-center gap-2">
             <Input
-              className="h-8"
+              className="h-7"
               value={row ?? ''}
               onChange={(e) =>
                 onChange(rows.map((r, idx) => (idx === i ? e.target.value : r)))
@@ -512,7 +513,7 @@ export function SlideForm({
     onChange(next);
   };
   return (
-    <div className="space-y-3">
+    <div className="space-y-1.5">
       {fields.map((f) => (
         <FieldRow
           key={f.name}
