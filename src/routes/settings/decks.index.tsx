@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { Plus } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Link, useRouter } from '@/core/i18n/navigation';
-import { apiGet, apiPost } from '@/lib/api-client';
+import { apiDelete, apiGet, apiPost } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
 import { Badge } from '@/components/ui/badge';
@@ -40,10 +40,21 @@ function DecksPage() {
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
   const [reading, setReading] = useState(false);
+  const [delTarget, setDelTarget] = useState<DeckRow | null>(null);
 
   const list = useQuery({
     queryKey: ['decks'],
     queryFn: () => apiGet<DeckRow[]>('/api/decks'),
+  });
+
+  const del = useMutation({
+    mutationFn: (id: string) => apiDelete(`/api/decks/${id}`),
+    onSuccess: () => {
+      toast.success(m['settings.decks.deleted']());
+      setDelTarget(null);
+      qc.invalidateQueries({ queryKey: ['decks'] });
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const gen = useMutation({
@@ -216,11 +227,45 @@ function DecksPage() {
                 >
                   {m['settings.decks.edit']()}
                 </Link>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                  aria-label={m['settings.decks.delete']()}
+                  onClick={() => setDelTarget(d)}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      <Dialog open={!!delTarget} onOpenChange={(o) => !o && setDelTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{m['settings.decks.delete_title']()}</DialogTitle>
+          </DialogHeader>
+          <p className="text-muted-foreground text-sm">
+            {m['settings.decks.delete_desc']({ title: delTarget?.title ?? '' })}
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDelTarget(null)}>
+              {m['settings.decks.cancel']()}
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={del.isPending}
+              onClick={() => delTarget && del.mutate(delTarget.id)}
+            >
+              {del.isPending
+                ? m['settings.decks.deleting']()
+                : m['settings.decks.delete']()}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
