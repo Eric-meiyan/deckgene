@@ -823,6 +823,7 @@
   "settings.decks.delete": "删除",
   "settings.decks.delete_title": "删除演示稿",
   "settings.decks.delete_desc": "确定删除「{title}」吗？此操作不可撤销，该演示稿的所有幻灯片将一并删除。",
+  "settings.decks.delete_published_warn": "此演示稿已发布，删除后公开链接将立即失效，已分享给他人的链接会打不开。",
   "settings.decks.deleting": "删除中…",
   "settings.decks.deleted": "已删除",
   "settings.decks.cancel": "取消",

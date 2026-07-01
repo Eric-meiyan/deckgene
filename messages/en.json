@@ -822,6 +822,7 @@
   "settings.decks.delete": "Delete",
   "settings.decks.delete_title": "Delete deck",
   "settings.decks.delete_desc": "Delete \"{title}\"? This cannot be undone — all its slides will be removed.",
+  "settings.decks.delete_published_warn": "This deck is published — deleting it takes the public link offline immediately, and any link already shared will stop working.",
   "settings.decks.deleting": "Deleting…",
   "settings.decks.deleted": "Deleted",
   "settings.decks.cancel": "Cancel",

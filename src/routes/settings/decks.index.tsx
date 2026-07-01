@@ -250,6 +250,16 @@ function DecksPage() {
           <p className="text-muted-foreground text-sm">
             {m['settings.decks.delete_desc']({ title: delTarget?.title ?? '' })}
           </p>
+          {delTarget?.status === 'published' && (
+            <div className="border-destructive/30 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-sm">
+              <p>{m['settings.decks.delete_published_warn']()}</p>
+              {delTarget.url && (
+                <p className="mt-1 truncate font-mono text-xs opacity-80">
+                  {delTarget.url}
+                </p>
+              )}
+            </div>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setDelTarget(null)}>
               {m['settings.decks.cancel']()}
