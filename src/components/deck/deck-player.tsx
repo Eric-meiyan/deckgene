@@ -14,6 +14,52 @@ function pad(n: number) {
   return String(n).padStart(2, '0');
 }
 
+// slide 的字号/版式按 ≈1280px 设计。全屏演示按设计宽渲染再等比放大，
+// 保证比例与 library/编辑器一致（否则大屏上留白/版式会被放大失衡）。
+const DESIGN_W = 1280;
+
+/** 按 1280 设计宽渲染一页，再 transform 缩放填满容器（保持 16:9）。 */
+function ScaledStage({
+  children,
+  style,
+  maxWidth,
+}: {
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+  maxWidth: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => setScale(el.clientWidth / DESIGN_W);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <div
+      ref={ref}
+      className="relative w-full overflow-hidden"
+      style={{ aspectRatio: '16 / 9', maxWidth }}
+    >
+      <div
+        className="deck-fonts absolute top-0 left-0"
+        style={{
+          ...style,
+          width: DESIGN_W,
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 /**
  * 全屏演示播放器（纯幻灯片）。所有者(/present)与公开页(/d 的"演示")共用。
  * 数据由调用方传入；自身不取数据，故公开页无需鉴权即可演示。
@@ -136,17 +182,14 @@ export function DeckPlayer({
       ) : (
         <div className="flex flex-1 items-center justify-center overflow-hidden px-4 pb-2">
           {/* 按可用高度反算最大宽度：16:9 幻灯片在保持比例下尽量填满屏幕，
-              不再被 max-w-6xl 硬截断（否则宽屏上四周留大片黑边）。
+              不再被硬截断（否则宽屏上四周留大片黑边）。
               减去顶部信息栏 + 底部翻页栏 + 内边距（约 96px）。 */}
-          <div
-            className="deck-fonts w-full"
-            style={{
-              ...style,
-              width: 'min(100%, calc((100vh - 96px) * 16 / 9))',
-            }}
+          <ScaledStage
+            style={style}
+            maxWidth="min(100%, calc((100vh - 96px) * 16 / 9))"
           >
             {slides[i] && renderSlide(slides[i].slide_type, slides[i].content)}
-          </div>
+          </ScaledStage>
         </div>
       )}
 

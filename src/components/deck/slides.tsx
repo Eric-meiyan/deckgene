@@ -86,7 +86,7 @@ function TitleSlide({ c }: { c: Content }) {
       {c.subtitle && (
         <p
           className={cn(
-            'mt-4 max-w-2xl text-lg sm:text-xl',
+            'mt-4 max-w-4xl text-lg sm:text-xl',
             mutedClass(c.variant)
           )}
         >
@@ -546,7 +546,7 @@ function AuthorSlide({ c }: { c: Content }) {
             (c.name?.[0] ?? 'A')
           )}
         </div>
-        <div>
+        <div className="min-w-0 flex-1">
           <h1 className="text-4xl font-bold">{c.name}</h1>
           {c.role && (
             <p className={cn('mt-1 text-lg', eyebrowClass(c.variant))}>
@@ -554,7 +554,7 @@ function AuthorSlide({ c }: { c: Content }) {
             </p>
           )}
           {c.bio && (
-            <p className={cn('mt-3 max-w-xl', mutedClass(c.variant))}>
+            <p className={cn('mt-3 max-w-4xl', mutedClass(c.variant))}>
               {c.bio}
             </p>
           )}
@@ -590,11 +590,11 @@ function AnecdoteSlide({ c }: { c: Content }) {
   return (
     <Surface variant={c.variant}>
       <Eyebrow variant={c.variant}>{c.eyebrow}</Eyebrow>
-      <p className="max-w-3xl text-2xl leading-relaxed font-medium sm:text-3xl">
+      <p className="text-2xl leading-relaxed font-medium sm:text-3xl">
         “{c.story}”
       </p>
       {c.takeaway && (
-        <p className={cn('mt-6 max-w-2xl', mutedClass(c.variant))}>
+        <p className={cn('mt-6 max-w-4xl', mutedClass(c.variant))}>
           {c.takeaway}
         </p>
       )}
@@ -621,7 +621,7 @@ function DropCapSlide({ c }: { c: Content }) {
   return (
     <Surface variant={c.variant}>
       <Eyebrow variant={c.variant}>{c.eyebrow}</Eyebrow>
-      <p className="max-w-3xl text-lg leading-relaxed">
+      <p className="max-w-4xl text-lg leading-relaxed">
         <span className="text-primary float-left mr-3 text-7xl leading-[0.8] font-bold">
           {body.slice(0, 1)}
         </span>
@@ -712,7 +712,7 @@ function MythVsRealitySlide({ c }: { c: Content }) {
 function TestimonialSlide({ c }: { c: Content }) {
   return (
     <Surface variant={c.variant}>
-      <p className="max-w-3xl text-2xl leading-relaxed font-medium sm:text-3xl">
+      <p className="text-2xl leading-relaxed font-medium sm:text-3xl">
         “{c.quote}”
       </p>
       {(c.author || c.role) && (
@@ -761,7 +761,7 @@ function ValuePropSlide({ c }: { c: Content }) {
   return (
     <Surface variant={c.variant}>
       <Eyebrow variant={c.variant}>{c.eyebrow}</Eyebrow>
-      <p className="max-w-3xl text-3xl font-bold sm:text-4xl">{c.statement}</p>
+      <p className="text-3xl font-bold sm:text-4xl">{c.statement}</p>
       {c.forWho && (
         <p className={cn('mt-4', mutedClass(c.variant))}>For: {c.forWho}</p>
       )}
@@ -777,7 +777,7 @@ function PrincipleSlide({ c }: { c: Content }) {
         </p>
       )}
       <h2 className="mt-2 text-3xl font-bold sm:text-4xl">{c.title}</h2>
-      <p className={cn('mt-4 max-w-2xl text-lg', mutedClass(c.variant))}>
+      <p className={cn('mt-4 max-w-4xl text-lg', mutedClass(c.variant))}>
         {c.body}
       </p>
     </Surface>
@@ -1031,7 +1031,7 @@ function ExerciseSlide({ c }: { c: Content }) {
           </span>
         )}
       </div>
-      <p className="mb-4 max-w-2xl text-lg">{c.prompt}</p>
+      <p className="mb-4 max-w-4xl text-lg">{c.prompt}</p>
       {steps.length > 0 && (
         <ol className="list-decimal space-y-1 pl-5">
           {steps.map((s, i) => (
