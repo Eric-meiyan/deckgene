@@ -134,8 +134,17 @@ export function DeckPlayer({
           ))}
         </div>
       ) : (
-        <div className="flex flex-1 items-center justify-center overflow-hidden px-6 pb-2">
-          <div className="deck-fonts w-full max-w-6xl" style={style}>
+        <div className="flex flex-1 items-center justify-center overflow-hidden px-4 pb-2">
+          {/* 按可用高度反算最大宽度：16:9 幻灯片在保持比例下尽量填满屏幕，
+              不再被 max-w-6xl 硬截断（否则宽屏上四周留大片黑边）。
+              减去顶部信息栏 + 底部翻页栏 + 内边距（约 96px）。 */}
+          <div
+            className="deck-fonts w-full"
+            style={{
+              ...style,
+              width: 'min(100%, calc((100vh - 96px) * 16 / 9))',
+            }}
+          >
             {slides[i] && renderSlide(slides[i].slide_type, slides[i].content)}
           </div>
         </div>
