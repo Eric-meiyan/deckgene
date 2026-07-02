@@ -576,6 +576,29 @@ function DeckEditorPage() {
     withResolver: true,
   });
 
+  // 一键保存所有未保存的页；成功后放行本次被拦截的离开。
+  const saveAll = useMutation({
+    mutationFn: async () => {
+      const slides = deckQ.data?.slides ?? [];
+      for (const s of slides) {
+        const d = drafts[s.id];
+        if (
+          d !== undefined &&
+          JSON.stringify(d) !== JSON.stringify(s.content)
+        ) {
+          await apiPatch(`/api/decks/${id}/slides/${s.id}`, { content: d });
+        }
+      }
+    },
+    onSuccess: () => {
+      setDrafts({});
+      qc.invalidateQueries({ queryKey: ['deck', id] });
+      toast.success(m['settings.deck_editor.saved']());
+      leaveBlocker.proceed?.();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   // 撤销/重做快捷键（Cmd/Ctrl+Z、Cmd/Ctrl+Shift+Z、Ctrl+Y）。
   // 焦点在输入框内时不拦截，交给浏览器对该字段做原生字符级撤销。
   useEffect(() => {
@@ -887,14 +910,28 @@ function DeckEditorPage() {
             {m['settings.deck_editor.unsaved_desc']()}
           </p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => leaveBlocker.reset?.()}>
+            <Button
+              variant="outline"
+              disabled={saveAll.isPending}
+              onClick={() => leaveBlocker.reset?.()}
+            >
               {m['settings.deck_editor.unsaved_stay']()}
             </Button>
             <Button
-              variant="destructive"
+              variant="ghost"
+              className="text-destructive hover:text-destructive"
+              disabled={saveAll.isPending}
               onClick={() => leaveBlocker.proceed?.()}
             >
               {m['settings.deck_editor.unsaved_leave']()}
+            </Button>
+            <Button
+              disabled={saveAll.isPending}
+              onClick={() => saveAll.mutate()}
+            >
+              {saveAll.isPending
+                ? m['settings.deck_editor.unsaved_saving']()
+                : m['settings.deck_editor.unsaved_save_all']()}
             </Button>
           </DialogFooter>
         </DialogContent>

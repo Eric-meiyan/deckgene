@@ -842,6 +842,8 @@
   "settings.deck_editor.unsaved_desc": "有页面的编辑尚未保存，确定不保存就离开吗？",
   "settings.deck_editor.unsaved_stay": "留在本页",
   "settings.deck_editor.unsaved_leave": "仍然离开",
+  "settings.deck_editor.unsaved_save_all": "保存全部并离开",
+  "settings.deck_editor.unsaved_saving": "保存中…",
   "settings.deck_editor.deleted": "已删除",
   "settings.deck_editor.del_slide": "删除此页",
   "settings.deck_editor.reorder_hint": "拖拽手柄可重新排序。",
