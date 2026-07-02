@@ -279,6 +279,7 @@ const image: SlideTemplate = {
     heading: short(80).optional(),
     imageUrl: z.string().url(),
     caption: long(160).optional(),
+    fit: z.enum(['cover', 'contain']).optional(),
   }),
 };
 

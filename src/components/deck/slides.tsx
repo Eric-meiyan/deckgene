@@ -473,7 +473,10 @@ function ImageSlide({ c }: { c: Content }) {
         <img
           src={c.imageUrl}
           alt={c.heading ?? ''}
-          className="absolute inset-0 size-full object-cover"
+          className={cn(
+            'absolute inset-0 size-full',
+            c.fit === 'contain' ? 'object-contain' : 'object-cover'
+          )}
         />
       )}
       {(c.heading || c.caption) && (

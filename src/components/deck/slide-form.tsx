@@ -87,6 +87,7 @@ const LABELS_ZH: Record<string, string> = {
   buttonHref: '按钮链接',
   image: '配图链接',
   imageUrl: '图片链接',
+  fit: '图片填充',
   events: '事件',
   align: '对齐',
   size: '字号',
@@ -105,11 +106,15 @@ const ENUM_ZH: Record<string, string> = {
   sm: '小',
   md: '中',
   lg: '大',
+  cover: '填充(裁切)',
+  contain: '完整(留白)',
 };
 const ENUM_EN: Record<string, string> = {
   sm: 'Small',
   md: 'Medium',
   lg: 'Large',
+  cover: 'Fill (crop)',
+  contain: 'Fit (whole)',
 };
 
 // 英文：把 key 拆词首字母大写（buttonHref → Button Href）
