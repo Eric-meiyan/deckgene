@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useBlocker } from '@tanstack/react-router';
 import {
   closestCenter,
   DndContext,
@@ -45,6 +45,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -487,6 +488,18 @@ function DeckEditorPage() {
       return n;
     });
 
+  // 有未保存修改：某页存在草稿且与已保存内容不同（改回原样不算脏）。
+  const dirty = (deckQ.data?.slides ?? []).some((s) => {
+    const d = drafts[s.id];
+    return d !== undefined && JSON.stringify(d) !== JSON.stringify(s.content);
+  });
+  // 一个 blocker 同时兜住站内跳转（shouldBlockFn）与刷新/关标签（enableBeforeUnload）。
+  const leaveBlocker = useBlocker({
+    shouldBlockFn: () => dirty,
+    enableBeforeUnload: () => dirty,
+    withResolver: true,
+  });
+
   const deck = deckQ.data;
   if (deckQ.isError)
     return (
@@ -723,6 +736,35 @@ function DeckEditorPage() {
             pending={addSlide.isPending}
             onPick={(key) => addSlide.mutate(key)}
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={leaveBlocker.status === 'blocked'}
+        onOpenChange={(o) => {
+          if (!o) leaveBlocker.reset?.();
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {m['settings.deck_editor.unsaved_title']()}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-muted-foreground text-sm">
+            {m['settings.deck_editor.unsaved_desc']()}
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => leaveBlocker.reset?.()}>
+              {m['settings.deck_editor.unsaved_stay']()}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => leaveBlocker.proceed?.()}
+            >
+              {m['settings.deck_editor.unsaved_leave']()}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
