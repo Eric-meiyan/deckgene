@@ -815,6 +815,7 @@
   "settings.decks.title_ph": "deck 标题（可选）",
   "settings.decks.generating": "生成中……",
   "settings.decks.empty": "还没有 deck，先生成第一份。",
+  "settings.decks.no_slides": "暂无幻灯片",
   "settings.decks.edit": "编辑",
   "settings.decks.view": "查看",
   "settings.decks.slides": "页",

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 
 import { db } from '@/core/db';
@@ -148,6 +148,33 @@ export async function listDecks(userId: string): Promise<Deck[]> {
     .from(deck)
     .where(eq(deck.userId, userId))
     .orderBy(desc(deck.updatedAt));
+}
+
+export type DeckCover = { slideType: string; content: unknown };
+
+/** 列表 + 每个 deck 的首页（min order）用于渲染缩略图。 */
+export async function listDecksWithCover(
+  userId: string
+): Promise<Array<Deck & { cover: DeckCover | null }>> {
+  const decks = await listDecks(userId);
+  if (!decks.length) return decks.map((d) => ({ ...d, cover: null }));
+  const ids = decks.map((d) => d.id);
+  // 精简列，按 (deckId, order) 升序；JS 里取每个 deck 的首个即首页（兼容删除后 order 有空档）。
+  const rows = await db()
+    .select({
+      deckId: slide.deckId,
+      slideType: slide.slideType,
+      content: slide.content,
+    })
+    .from(slide)
+    .where(inArray(slide.deckId, ids))
+    .orderBy(asc(slide.deckId), asc(slide.order));
+  const firstByDeck = new Map<string, DeckCover>();
+  for (const r of rows) {
+    if (!firstByDeck.has(r.deckId))
+      firstByDeck.set(r.deckId, { slideType: r.slideType, content: r.content });
+  }
+  return decks.map((d) => ({ ...d, cover: firstByDeck.get(d.id) ?? null }));
 }
 
 /** 发布：status=published + 记录 publishedAt，live URL 生效。 */

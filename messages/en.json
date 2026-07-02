@@ -815,6 +815,7 @@
   "settings.decks.title_ph": "Deck title (optional)",
   "settings.decks.generating": "Generating…",
   "settings.decks.empty": "No decks yet. Generate your first one.",
+  "settings.decks.no_slides": "No slides yet",
   "settings.decks.edit": "Edit",
   "settings.decks.view": "View",
   "settings.decks.slides": "slides",

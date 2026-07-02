@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { Plus, Trash2 } from 'lucide-react';
@@ -8,6 +8,7 @@ import { Link, useRouter } from '@/core/i18n/navigation';
 import { apiDelete, apiGet, apiPost } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
+import { renderSlide } from '@/components/deck/slides';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -30,6 +31,50 @@ interface DeckRow {
   status: string;
   url: string | null;
   updated_at: string;
+  cover: { slideType: string; content: Record<string, unknown> } | null;
+}
+
+const DESIGN_W = 1280;
+
+/** 把首页按设计宽度渲染后等比缩放填满卡片顶部（保持 16:9，字迹清晰）。 */
+function DeckThumb({ cover }: { cover: DeckRow['cover'] }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => setScale(el.clientWidth / DESIGN_W);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className="bg-muted relative w-full overflow-hidden"
+      style={{ aspectRatio: '16 / 9' }}
+    >
+      {cover ? (
+        <div
+          className="absolute top-0 left-0"
+          style={{
+            width: DESIGN_W,
+            transform: `scale(${scale})`,
+            transformOrigin: 'top left',
+          }}
+        >
+          {renderSlide(cover.slideType, cover.content)}
+        </div>
+      ) : (
+        <div className="text-muted-foreground flex h-full items-center justify-center text-xs">
+          {m['settings.decks.no_slides']()}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function DecksPage() {
@@ -181,15 +226,24 @@ function DecksPage() {
         </Card>
       )}
 
-      <div className="grid gap-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {list.data?.map((d) => (
-          <Card key={d.id}>
-            <CardContent className="flex items-center justify-between gap-4 py-4">
+          <Card key={d.id} className="overflow-hidden py-0">
+            <Link href={`/settings/decks/${d.id}`} className="block">
+              <DeckThumb cover={d.cover} />
+            </Link>
+            <CardContent className="space-y-3 p-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="truncate font-medium">{d.title}</span>
+                  <Link
+                    href={`/settings/decks/${d.id}`}
+                    className="hover:text-primary truncate font-medium transition-colors"
+                  >
+                    {d.title}
+                  </Link>
                   <Badge
                     variant={d.status === 'published' ? 'default' : 'secondary'}
+                    className="shrink-0"
                   >
                     {d.status === 'published'
                       ? m['settings.decks.published']()
@@ -200,7 +254,13 @@ function DecksPage() {
                   {d.slug}
                 </div>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/settings/decks/${d.id}`}
+                  className={cn(buttonVariants({ size: 'sm' }), 'flex-1')}
+                >
+                  {m['settings.decks.edit']()}
+                </Link>
                 <Link
                   href={`/present/${d.id}`}
                   className={cn(
@@ -221,16 +281,10 @@ function DecksPage() {
                     {m['settings.decks.view']()}
                   </a>
                 )}
-                <Link
-                  href={`/settings/decks/${d.id}`}
-                  className={cn(buttonVariants({ size: 'sm' }))}
-                >
-                  {m['settings.decks.edit']()}
-                </Link>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-destructive hover:text-destructive"
+                  className="text-destructive hover:text-destructive shrink-0"
                   aria-label={m['settings.decks.delete']()}
                   onClick={() => setDelTarget(d)}
                 >
