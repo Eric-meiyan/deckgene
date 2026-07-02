@@ -1,0 +1,46 @@
+export const meta = {
+  title: 'Generate on-brand decks via API and MCP',
+  description:
+    'Use the REST API or MCP to let your code and AI agents create decks, add slides, apply branding, and publish — embedding deck generation into your own workflow.',
+  created_at: '2026-06-28',
+  author_name: 'deckgene team',
+  author_image: '/logo.svg',
+};
+
+Every deckgene capability is programmable. Whether you want "one-click weekly-report deck" inside your own backend, or an AI agent that turns analysis into a presentation on its own, there are two equivalent channels: the **REST API** and **MCP**.
+
+## REST API
+
+Call `/api/v1/*` with your API key:
+
+```bash
+curl -X POST https://deckgene.com/api/v1/generate \
+  -H "Authorization: Bearer $DECKGENE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"input": "Turn this quarterly summary into a deck…", "title": "Q2 Review"}'
+```
+
+This endpoint is **synchronous**: it runs the full generation pipeline within the request and returns `{ job_id, status, result }`, where `result` is the finished deck. From there you can:
+
+- read / update the deck and individual slides;
+- manage **brand kits** and set one active (`/api/v1/brands`);
+- publish / unpublish (`/api/v1/decks/{id}/publish`) to get a public link.
+
+## MCP
+
+Connect deckgene to any MCP-capable AI client and the agent can operate decks like tools. Built-in tools include:
+
+- `generate_deck` — generate a whole deck from text;
+- `list_slide_templates` / `get_deck` — discover available slide types, read an existing deck;
+- `add_slide` / `update_slide` / `delete_slide` / `reorder_slides` — **insert, edit, delete, and reorder a slide in a deck**;
+- `list_brands` / `set_active_brand` — switch brands;
+- `publish_deck` — publish and return the live URL;
+- `generate_image` — generate imagery from a prompt.
+
+In other words, an agent can plan the outline, fill each page, apply your brand, and publish — with no manual clicking in a UI.
+
+## Brand consistency
+
+Whether over API or MCP, output uses the workspace's active brand (primary color / fonts / logo). Every auto-generated deck looks like it came from your own design team.
+
+Grab your connection details under **Settings → MCP / API Key** in the console, and start with a few lines of code.

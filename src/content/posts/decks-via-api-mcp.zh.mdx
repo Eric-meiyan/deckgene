@@ -1,0 +1,46 @@
+export const meta = {
+  title: '用 API 和 MCP 生成品牌化演示稿',
+  description:
+    '通过 REST API 或 MCP,让代码和 AI agent 直接建稿、加页、套品牌、发布——把演示稿生成嵌进你自己的工作流。',
+  created_at: '2026-06-28',
+  author_name: 'deckgene 团队',
+  author_image: '/logo.svg',
+};
+
+deckgene 的每一项能力都能编程调用。无论你是想在自己的后端里「一键生成周报 deck」,还是让 AI agent 自动把分析结果变成演示稿,都有两条对等的通道:**REST API** 和 **MCP**。
+
+## REST API
+
+用你的 API Key 调用 `/api/v1/*`:
+
+```bash
+curl -X POST https://deckgene.com/api/v1/generate \
+  -H "Authorization: Bearer $DECKGENE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"input": "把这段季度总结做成一套演示稿……", "title": "Q2 复盘"}'
+```
+
+这个接口是**同步**的:请求内跑完整个生成管线,直接返回 `{ job_id, status, result }`,`result` 里就是生成好的 deck。拿到之后可以继续:
+
+- 读取 / 更新 deck 与单页;
+- 管理**品牌套件**并设为激活(`/api/v1/brands`);
+- 发布 / 取消发布(`/api/v1/decks/{id}/publish`),拿到公开链接。
+
+## MCP
+
+把 deckgene 挂到支持 MCP 的 AI 客户端上,agent 就能像用工具一样操作演示稿。内置工具包括:
+
+- `generate_deck` — 从文字生成整套 deck;
+- `list_slide_templates` / `get_deck` — 了解可用页型、读取现有 deck;
+- `add_slide` / `update_slide` / `delete_slide` / `reorder_slides` — **往某个 deck 里插入、修改、删除、重排某一页**;
+- `list_brands` / `set_active_brand` — 切换品牌;
+- `publish_deck` — 发布并返回 live URL;
+- `generate_image` — 按提示生成配图。
+
+也就是说,agent 可以自己规划大纲、逐页填充、套上你的品牌、最后发布——全程无需人工点界面。
+
+## 品牌一致性
+
+无论走 API 还是 MCP,输出都会套用工作区的激活品牌(主色 / 字体 / Logo)。你的每一份自动生成的 deck,看起来都像出自你自己的设计团队。
+
+在控制台的 **设置 → MCP / API Key** 里就能拿到接入信息,几行代码即可开始。

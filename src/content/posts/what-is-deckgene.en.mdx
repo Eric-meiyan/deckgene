@@ -1,0 +1,33 @@
+export const meta = {
+  title: 'What is deckgene',
+  description:
+    'deckgene is white-label AI presentation infrastructure — turn "generate an on-brand deck from a sentence" into an API so your product ships AI decks in minutes.',
+  created_at: '2026-06-15',
+  author_name: 'deckgene team',
+  author_image: '/logo.svg',
+};
+
+deckgene is **white-label AI presentation infrastructure**. It packages one job — "take some text, a URL, or a document and produce a well-designed, on-brand deck" — into a capability you can call directly. Use it inside deckgene's own console, or wire it into your own product over API / MCP, and give your users an "AI decks" feature in minutes instead of building a slide engine from scratch.
+
+## From input to finished deck
+
+1. **Input** — paste text, drop in a web link, or upload a document.
+2. **Plan** — the AI first plans the whole arc (Open → Argue → Show → Close) and picks the right **slide type** for each page.
+3. **Fill** — every page is a **schema-typed slide** (title, bullets, stats, charts, image + text, timeline… nearly a hundred types). Content is strictly constrained, so layouts stay solid and never collapse.
+4. **Brand** — your **brand kit** is applied automatically: primary color, fonts, logo — one-click reskin, consistent output.
+5. **Ship** — preview and present full-screen, publish to a public link (`/d/your-slug`), or export to PPTX / PDF.
+
+## Why it isn't "just another AI PPT tool"
+
+- **White-label / headless** — deckgene is infrastructure for your product, not an end-user app. The brand, the entry point, and the billing can all be yours.
+- **Structured, not freeform layout** — slide types are hard schemas. The AI fills content but can't wreck the layout, so output is predictable and batchable.
+- **Editable** — a full editor after generation: per-slide tweaks, AI rewrite, undo/redo, drag-to-reorder.
+- **Programmable** — dual channels, REST API and MCP, so an AI agent can create, add slides to, and publish decks (see the next post).
+
+## Who it's for
+
+- Teams adding "one-click deck / report generation" to their own SaaS;
+- Anyone turning structured data into on-brand decks at scale (weekly reports, sales material, course notes);
+- Developers who want AI agents to produce presentations on their own.
+
+Turn "make a deck" into a single API call — that's deckgene.
