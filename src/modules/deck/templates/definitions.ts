@@ -283,6 +283,23 @@ const image: SlideTemplate = {
   }),
 };
 
+const imageGrid: SlideTemplate = {
+  key: 'imageGrid',
+  name: 'Image grid',
+  category: 'Show',
+  whenToUse:
+    'Two to four images side by side, each with an optional caption. Use to show a set of visuals together.',
+  schema: z.object({
+    variant: surface,
+    heading: short(80).optional(),
+    fit: z.enum(['cover', 'contain']).optional(),
+    images: z
+      .array(z.object({ imageUrl: urlOpt(), caption: short(80).optional() }))
+      .min(2)
+      .max(4),
+  }),
+};
+
 const imageText: SlideTemplate = {
   key: 'imageText',
   name: 'Image + text',
@@ -1588,6 +1605,7 @@ const RAW_SLIDE_TEMPLATES: SlideTemplate[] = [
   chart,
   image,
   imageText,
+  imageGrid,
   timeline,
   dataTable,
   // Close

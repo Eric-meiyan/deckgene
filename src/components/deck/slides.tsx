@@ -550,6 +550,47 @@ function ImageTextSlide({ c }: { c: Content }) {
   );
 }
 
+function ImageGridSlide({ c }: { c: Content }) {
+  const images: Content[] = Array.isArray(c.images) ? c.images : [];
+  const cols = Math.min(Math.max(images.length, 1), 4);
+  return (
+    <Surface variant={c.variant}>
+      {c.heading && <H>{c.heading}</H>}
+      <div
+        className="grid min-h-0 flex-1 gap-4"
+        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+      >
+        {images.map((im, i) => (
+          <figure key={i} className="flex min-h-0 flex-col">
+            <div className="bg-muted relative min-h-0 flex-1 overflow-hidden rounded-xl">
+              {im.imageUrl && (
+                <img
+                  src={im.imageUrl}
+                  alt=""
+                  className={cn(
+                    'absolute inset-0 size-full',
+                    c.fit === 'contain' ? 'object-contain' : 'object-cover'
+                  )}
+                />
+              )}
+            </div>
+            {im.caption && (
+              <figcaption
+                className={cn(
+                  'mt-2 text-center text-sm',
+                  mutedClass(c.variant)
+                )}
+              >
+                {im.caption}
+              </figcaption>
+            )}
+          </figure>
+        ))}
+      </div>
+    </Surface>
+  );
+}
+
 function TimelineSlide({ c }: { c: Content }) {
   const events: Content[] = c.events ?? [];
   return (
@@ -2489,6 +2530,7 @@ const RENDERERS: Record<string, (c: Content) => React.ReactNode> = {
   chart: (c) => <ChartSlide c={c} />,
   image: (c) => <ImageSlide c={c} />,
   imageText: (c) => <ImageTextSlide c={c} />,
+  imageGrid: (c) => <ImageGridSlide c={c} />,
   timeline: (c) => <TimelineSlide c={c} />,
   dataTable: (c) => <DataTableSlide c={c} />,
 };
