@@ -234,6 +234,8 @@ function InspectPanel({
   } catch {
     jsonError = true;
   }
+  // 本页是否有未保存改动（草稿与已保存内容不同）；无改动时禁用「保存」。
+  const panelDirty = JSON.stringify(content) !== JSON.stringify(slide.content);
 
   const save = useMutation({
     mutationFn: (cnt?: Record<string, unknown>) =>
@@ -389,10 +391,12 @@ function InspectPanel({
 
       <Button
         className="w-full"
-        disabled={save.isPending}
+        disabled={save.isPending || !panelDirty}
         onClick={() => save.mutate(undefined)}
       >
-        {m['settings.deck_editor.save']()}
+        {panelDirty
+          ? m['settings.deck_editor.save']()
+          : m['settings.deck_editor.saved']()}
       </Button>
     </div>
   );
