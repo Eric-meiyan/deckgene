@@ -185,6 +185,12 @@ export function getSettingGroups(): SettingGroup[] {
       description: 'Inject plausible.js for self-hosted or cloud Plausible',
       tab: 'analytics',
     },
+    {
+      name: 'umami',
+      title: 'Umami',
+      description: 'Inject the Umami analytics script (self-hosted or cloud)',
+      tab: 'analytics',
+    },
 
     // Customer Service
     {
@@ -834,6 +840,26 @@ export function getSettings(): Setting[] {
       placeholder: 'https://plausible.io/js/script.js',
       tip: 'Use https://plausible.io/js/script.js for cloud, or your self-hosted URL',
       group: 'plausible',
+      tab: 'analytics',
+    },
+
+    // ─── Analytics / Umami ───────────────────────────────────────────
+    {
+      name: 'umami_website_id',
+      title: 'Website ID',
+      type: 'text',
+      placeholder: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+      tip: 'The data-website-id from your Umami tracking snippet',
+      group: 'umami',
+      tab: 'analytics',
+    },
+    {
+      name: 'umami_src',
+      title: 'Script Src',
+      type: 'text',
+      placeholder: 'https://analytics.umami.is/script.js',
+      tip: 'Use https://analytics.umami.is/script.js for cloud, or your self-hosted URL',
+      group: 'umami',
       tab: 'analytics',
     },
 

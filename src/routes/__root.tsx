@@ -18,6 +18,7 @@ import { getQueryClient } from '@/lib/query-client';
 import { getLocale, locales, localizeUrl } from '@/paraglide/runtime.js';
 import { GoogleAnalytics } from '@/components/analytics/google-analytics';
 import { Plausible } from '@/components/analytics/plausible';
+import { Umami } from '@/components/analytics/umami';
 import { CustomerService } from '@/components/customer-service';
 import { GoogleOneTap } from '@/components/google-one-tap';
 import { Toaster } from '@/components/ui/sonner';
@@ -37,6 +38,12 @@ const getAnalyticsConfigs = createServerFn().handler(async () => {
     gaId: configs.google_analytics_id?.trim() || '',
     plausibleDomain: configs.plausible_domain?.trim() || '',
     plausibleSrc: configs.plausible_src?.trim() || '',
+    // 默认套用自建 Umami；后台「设置 → Analytics → Umami」可覆盖。
+    umamiWebsiteId:
+      configs.umami_website_id?.trim() ||
+      'b9c58f48-ea2e-45da-bf8a-2c3714d14443',
+    umamiSrc:
+      configs.umami_src?.trim() || 'https://stats.aiteacher.ai/script.js',
     crispWebsiteId:
       configs.crisp_enabled === 'true'
         ? configs.crisp_website_id?.trim() || ''
@@ -117,6 +124,12 @@ function RootComponent() {
           <Plausible
             domain={analytics.plausibleDomain}
             src={analytics.plausibleSrc || undefined}
+          />
+        ) : null}
+        {analytics?.umamiWebsiteId ? (
+          <Umami
+            websiteId={analytics.umamiWebsiteId}
+            src={analytics.umamiSrc || undefined}
           />
         ) : null}
         <CustomerService
