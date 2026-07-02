@@ -26,6 +26,10 @@ export const SLIDE_ZH: Record<string, { name: string; when: string }> = {
   kpi: { name: 'KPI 看板', when: '多个 KPI 带变化与趋势。进展证明看板。' },
   chart: { name: '图表', when: '数据可视化（折线/柱/面积）。揭示趋势或对比。' },
   image: { name: '图片', when: '满幅图片配少量文字。营造氛围或调节节奏。' },
+  imageText: {
+    name: '图文左右',
+    when: '一侧大图、另一侧标题配正文或要点。图片可切左右。用于图文并排讲解。',
+  },
   timeline: {
     name: '时间线',
     when: '沿时间轴的事件。历史、日期序列、过往业绩。',

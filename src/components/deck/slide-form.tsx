@@ -88,6 +88,8 @@ const LABELS_ZH: Record<string, string> = {
   image: '配图链接',
   imageUrl: '图片链接',
   fit: '图片填充',
+  imageSide: '图片位置',
+  bullets: '要点',
   events: '事件',
   align: '对齐',
   size: '字号',

@@ -491,6 +491,65 @@ function ImageSlide({ c }: { c: Content }) {
   );
 }
 
+function ImageTextSlide({ c }: { c: Content }) {
+  const imgRight = c.imageSide === 'right';
+  const bullets: string[] = Array.isArray(c.bullets) ? c.bullets : [];
+  const img = (
+    <div className="bg-muted relative w-1/2 shrink-0 self-stretch overflow-hidden">
+      {c.imageUrl && (
+        <img
+          src={c.imageUrl}
+          alt={c.heading ?? ''}
+          className={cn(
+            'absolute inset-0 size-full',
+            c.fit === 'contain' ? 'object-contain' : 'object-cover'
+          )}
+        />
+      )}
+    </div>
+  );
+  const text = (
+    <div className="flex min-w-0 flex-1 flex-col justify-center p-10 sm:p-14">
+      {c.heading && (
+        <h2 className="mb-4 text-3xl font-bold sm:text-4xl">{c.heading}</h2>
+      )}
+      {c.body && (
+        <p className={cn('text-lg leading-relaxed', mutedClass(c.variant))}>
+          {c.body}
+        </p>
+      )}
+      {bullets.length > 0 && (
+        <ul className="mt-4 space-y-2">
+          {bullets.map((b, i) => (
+            <li key={i} className="flex gap-2">
+              <span className="text-primary mt-1">•</span>
+              <span>{b}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {c.caption && (
+        <p className={cn('mt-6 text-sm', mutedClass(c.variant))}>{c.caption}</p>
+      )}
+    </div>
+  );
+  return (
+    <Surface variant={c.variant} className="flex-row p-0 sm:p-0">
+      {imgRight ? (
+        <>
+          {text}
+          {img}
+        </>
+      ) : (
+        <>
+          {img}
+          {text}
+        </>
+      )}
+    </Surface>
+  );
+}
+
 function TimelineSlide({ c }: { c: Content }) {
   const events: Content[] = c.events ?? [];
   return (
@@ -2429,6 +2488,7 @@ const RENDERERS: Record<string, (c: Content) => React.ReactNode> = {
   kpi: (c) => <KpiSlide c={c} />,
   chart: (c) => <ChartSlide c={c} />,
   image: (c) => <ImageSlide c={c} />,
+  imageText: (c) => <ImageTextSlide c={c} />,
   timeline: (c) => <TimelineSlide c={c} />,
   dataTable: (c) => <DataTableSlide c={c} />,
 };

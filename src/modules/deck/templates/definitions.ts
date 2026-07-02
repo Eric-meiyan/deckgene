@@ -283,6 +283,24 @@ const image: SlideTemplate = {
   }),
 };
 
+const imageText: SlideTemplate = {
+  key: 'imageText',
+  name: 'Image + text',
+  category: 'Show',
+  whenToUse:
+    'A large image beside a heading with prose and/or bullet points. Use to pair one visual with an explanation.',
+  schema: z.object({
+    variant: surface,
+    imageUrl: z.string().url(),
+    imageSide: z.enum(['left', 'right']).optional(),
+    fit: z.enum(['cover', 'contain']).optional(),
+    heading: short(80).optional(),
+    body: long(400).optional(),
+    bullets: z.array(short(120)).optional(),
+    caption: short(120).optional(),
+  }),
+};
+
 const timeline: SlideTemplate = {
   key: 'timeline',
   name: 'Timeline',
@@ -1569,6 +1587,7 @@ const RAW_SLIDE_TEMPLATES: SlideTemplate[] = [
   kpi,
   chart,
   image,
+  imageText,
   timeline,
   dataTable,
   // Close
