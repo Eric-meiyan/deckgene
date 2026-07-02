@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useReducer, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useBlocker } from '@tanstack/react-router';
 import {
@@ -22,8 +22,10 @@ import {
   PanelRightOpen,
   Play,
   Plus,
+  Redo2,
   Sparkles,
   Trash2,
+  Undo2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -396,6 +398,74 @@ function InspectPanel({
   );
 }
 
+type Snap = Record<string, unknown>;
+
+/**
+ * 每页（按 slide.id）的草稿撤销/重做历史。会话内有效、纯前端。
+ * - record：用户改动经 debounce 合并成一格快照（连续打字停顿后才落一格）
+ * - undo/redo：先 flush 待提交项，再移动指针，返回目标快照供上层 setDraft
+ * - reset：保存后清空该页历史，以新内容为新基线
+ */
+function useDraftHistory() {
+  const ref = useRef<Record<string, { stack: Snap[]; ptr: number }>>({});
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pending = useRef<{ sid: string; val: Snap } | null>(null);
+  const [, bump] = useReducer((x: number) => x + 1, 0);
+
+  const flush = () => {
+    if (timer.current) {
+      clearTimeout(timer.current);
+      timer.current = null;
+    }
+    const p = pending.current;
+    pending.current = null;
+    if (!p) return;
+    const h = ref.current[p.sid];
+    if (!h) return;
+    if (JSON.stringify(h.stack[h.ptr]) === JSON.stringify(p.val)) return;
+    h.stack = h.stack.slice(0, h.ptr + 1);
+    h.stack.push(p.val);
+    h.ptr = h.stack.length - 1;
+    bump();
+  };
+
+  const record = (sid: string, base: Snap, val: Snap) => {
+    if (!ref.current[sid]) ref.current[sid] = { stack: [base], ptr: 0 };
+    pending.current = { sid, val };
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(flush, 400);
+    bump(); // 让"有待提交改动 → 可撤销"即时反映到按钮
+  };
+
+  const step = (sid: string, dir: -1 | 1): Snap | null => {
+    flush();
+    const h = ref.current[sid];
+    if (!h) return null;
+    const next = h.ptr + dir;
+    if (next < 0 || next >= h.stack.length) return null;
+    h.ptr = next;
+    bump();
+    return h.stack[next];
+  };
+
+  return {
+    record,
+    undo: (sid: string) => step(sid, -1),
+    redo: (sid: string) => step(sid, 1),
+    canUndo: (sid: string) =>
+      (ref.current[sid]?.ptr ?? 0) > 0 || pending.current?.sid === sid,
+    canRedo: (sid: string) => {
+      const h = ref.current[sid];
+      return !!h && h.ptr < h.stack.length - 1;
+    },
+    reset: (sid: string) => {
+      delete ref.current[sid];
+      if (pending.current?.sid === sid) pending.current = null;
+      bump();
+    },
+  };
+}
+
 function DeckEditorPage() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
@@ -488,6 +558,8 @@ function DeckEditorPage() {
       return n;
     });
 
+  const hist = useDraftHistory();
+
   // 有未保存修改：某页存在草稿且与已保存内容不同（改回原样不算脏）。
   const dirty = (deckQ.data?.slides ?? []).some((s) => {
     const d = drafts[s.id];
@@ -499,6 +571,28 @@ function DeckEditorPage() {
     enableBeforeUnload: () => dirty,
     withResolver: true,
   });
+
+  // 撤销/重做快捷键（Cmd/Ctrl+Z、Cmd/Ctrl+Shift+Z、Ctrl+Y）。
+  // 焦点在输入框内时不拦截，交给浏览器对该字段做原生字符级撤销。
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey)) return;
+      const k = e.key.toLowerCase();
+      if (k !== 'z' && k !== 'y') return;
+      const el = document.activeElement as HTMLElement | null;
+      const tag = el?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || el?.isContentEditable)
+        return;
+      if (!selectedId) return;
+      e.preventDefault();
+      const redo = (k === 'z' && e.shiftKey) || k === 'y';
+      const v = redo ? hist.redo(selectedId) : hist.undo(selectedId);
+      if (v) setDraft(selectedId, v);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId]);
 
   const deck = deckQ.data;
   if (deckQ.isError)
@@ -697,13 +791,41 @@ function DeckEditorPage() {
                   <span className="text-sm font-semibold">
                     {m['settings.deck_editor.inspect']()}
                   </span>
-                  <button
-                    className="text-muted-foreground hover:text-foreground"
-                    aria-label={m['settings.deck_editor.collapse_panel']()}
-                    onClick={() => setCollapsed(true)}
-                  >
-                    <PanelRightClose className="size-4" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+                      aria-label={m['settings.deck_editor.undo']()}
+                      title={m['settings.deck_editor.undo']()}
+                      disabled={!selected || !hist.canUndo(selected.id)}
+                      onClick={() => {
+                        if (!selected) return;
+                        const v = hist.undo(selected.id);
+                        if (v) setDraft(selected.id, v);
+                      }}
+                    >
+                      <Undo2 className="size-4" />
+                    </button>
+                    <button
+                      className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+                      aria-label={m['settings.deck_editor.redo']()}
+                      title={m['settings.deck_editor.redo']()}
+                      disabled={!selected || !hist.canRedo(selected.id)}
+                      onClick={() => {
+                        if (!selected) return;
+                        const v = hist.redo(selected.id);
+                        if (v) setDraft(selected.id, v);
+                      }}
+                    >
+                      <Redo2 className="size-4" />
+                    </button>
+                    <button
+                      className="text-muted-foreground hover:text-foreground ml-1"
+                      aria-label={m['settings.deck_editor.collapse_panel']()}
+                      onClick={() => setCollapsed(true)}
+                    >
+                      <PanelRightClose className="size-4" />
+                    </button>
+                  </div>
                 </div>
                 {selected ? (
                   <InspectPanel
@@ -711,8 +833,14 @@ function DeckEditorPage() {
                     deckId={id}
                     slide={selected}
                     content={draftFor(selected)}
-                    onChange={(c) => setDraft(selected.id, c)}
-                    onSaved={() => clearDraft(selected.id)}
+                    onChange={(c) => {
+                      hist.record(selected.id, selected.content, c);
+                      setDraft(selected.id, c);
+                    }}
+                    onSaved={() => {
+                      clearDraft(selected.id);
+                      hist.reset(selected.id);
+                    }}
                   />
                 ) : (
                   <p className="text-muted-foreground text-sm">

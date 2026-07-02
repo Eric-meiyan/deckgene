@@ -836,6 +836,8 @@
   "settings.deck_editor.add": "新增页",
   "settings.deck_editor.save": "保存",
   "settings.deck_editor.saved": "已保存",
+  "settings.deck_editor.undo": "撤销",
+  "settings.deck_editor.redo": "重做",
   "settings.deck_editor.unsaved_title": "有未保存的修改",
   "settings.deck_editor.unsaved_desc": "有页面的编辑尚未保存，确定不保存就离开吗？",
   "settings.deck_editor.unsaved_stay": "留在本页",

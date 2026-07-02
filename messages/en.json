@@ -836,6 +836,8 @@
   "settings.deck_editor.add": "Add slide",
   "settings.deck_editor.save": "Save",
   "settings.deck_editor.saved": "Saved",
+  "settings.deck_editor.undo": "Undo",
+  "settings.deck_editor.redo": "Redo",
   "settings.deck_editor.unsaved_title": "Unsaved changes",
   "settings.deck_editor.unsaved_desc": "You have slide edits that aren't saved. Leave without saving?",
   "settings.deck_editor.unsaved_stay": "Stay",
