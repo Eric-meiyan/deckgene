@@ -18,6 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import {
   GripVertical,
+  MonitorPlay,
   PanelRightClose,
   PanelRightOpen,
   Play,
@@ -39,6 +40,7 @@ import { apiDelete, apiGet, apiPatch, apiPost } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
+import { DeckPlayer } from '@/components/deck/deck-player';
 import { sampleSlideContent, SlideForm } from '@/components/deck/slide-form';
 import { renderSlide } from '@/components/deck/slides';
 import { Badge } from '@/components/ui/badge';
@@ -480,6 +482,8 @@ function DeckEditorPage() {
   const [addAt, setAddAt] = useState<number | undefined>(undefined);
   const [selectedId, setSelectedId] = useState('');
   const [collapsed, setCollapsed] = useState(false);
+  // 就地全屏演示（"从当前页演示"）；退出后编辑器仍在原地、当前页不变。
+  const [presenting, setPresenting] = useState(false);
   // 每页的未保存编辑草稿（键=slide.id）；未选中/未改动的页回退到已保存内容。
   const [drafts, setDrafts] = useState<Record<string, Record<string, unknown>>>(
     {}
@@ -699,6 +703,16 @@ function DeckEditorPage() {
               ))}
             </SelectContent>
           </Select>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1"
+            disabled={!selected}
+            onClick={() => setPresenting(true)}
+          >
+            <MonitorPlay className="size-4" />
+            {m['settings.deck_editor.present_current']()}
+          </Button>
           <Link
             href={`/present/${id}`}
             className={cn(buttonVariants({ size: 'sm' }), 'gap-1')}
@@ -936,6 +950,23 @@ function DeckEditorPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {presenting && (
+        <DeckPlayer
+          title={deck.title}
+          slides={ordered.map((s) => ({
+            id: s.id,
+            slide_type: s.slide_type,
+            content: draftFor(s),
+          }))}
+          style={previewStyle}
+          startIndex={Math.max(
+            ordered.findIndex((s) => s.id === selectedId),
+            0
+          )}
+          onExit={() => setPresenting(false)}
+        />
+      )}
     </div>
   );
 }

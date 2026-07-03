@@ -69,14 +69,19 @@ export function DeckPlayer({
   slides,
   style,
   onExit,
+  startIndex = 0,
 }: {
   title?: string;
   slides: PlayerSlide[];
   style?: React.CSSProperties;
   onExit: () => void;
+  /** 起始页下标（"从当前页演示"用）。越界时夹到合法范围。 */
+  startIndex?: number;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const [i, setI] = useState(0);
+  const [i, setI] = useState(() =>
+    Math.min(Math.max(startIndex, 0), Math.max(slides.length - 1, 0))
+  );
   const [overview, setOverview] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const total = slides.length;

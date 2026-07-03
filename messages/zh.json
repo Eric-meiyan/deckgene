@@ -940,6 +940,7 @@
   "settings.present.next": "下一页",
   "settings.present.hints": "→ 下一页 · ← 上一页 · G 概览 · F 全屏 · Esc 退出",
   "settings.deck_editor.present": "演示",
+  "settings.deck_editor.present_current": "演示当前页",
   "settings.deck_editor.ai_iterate_ph": "告诉 AI 如何改写这一页…(10 积分)",
   "settings.deck_editor.ai_iterate_btn": "AI 改写",
   "settings.deck_editor.ai_iterating": "改写中…",
