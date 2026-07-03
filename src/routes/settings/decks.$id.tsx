@@ -726,6 +726,12 @@ function DeckEditorPage() {
           >
             {m['settings.deck_editor.export_pptx']()}
           </a>
+          <a
+            href={`/api/decks/${id}/export?format=json`}
+            className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
+          >
+            {m['settings.deck_editor.export_json']()}
+          </a>
           {deck.status === 'published' && (
             <a
               href={`/api/decks/${id}/export?format=pdf`}

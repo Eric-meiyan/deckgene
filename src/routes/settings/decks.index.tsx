@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Link, useRouter } from '@/core/i18n/navigation';
@@ -120,6 +120,43 @@ function DecksPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const importRef = useRef<HTMLInputElement>(null);
+  const importDeck = useMutation({
+    mutationFn: (payload: unknown) =>
+      apiPost<{ deck_id: string; imported: number; skipped: unknown[] }>(
+        '/api/decks/import',
+        payload
+      ),
+    onSuccess: (d) => {
+      const skipped = d.skipped?.length ?? 0;
+      if (skipped > 0) {
+        toast.warning(
+          m['settings.decks.import_partial']({
+            imported: d.imported,
+            skipped,
+          })
+        );
+      } else {
+        toast.success(m['settings.decks.import_ok']({ imported: d.imported }));
+      }
+      qc.invalidateQueries({ queryKey: ['decks'] });
+      router.push(`/settings/decks/${d.deck_id}`);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    e.target.value = ''; // 允许重复选同一文件
+    if (!f) return;
+    try {
+      const json = JSON.parse(await f.text());
+      importDeck.mutate(json);
+    } catch {
+      toast.error(m['settings.decks.import_bad_file']());
+    }
+  }
+
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
@@ -143,79 +180,99 @@ function DecksPage() {
             {m['settings.decks.subtitle']()}
           </p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger className={cn(buttonVariants(), 'gap-2')}>
-            <Plus className="size-4" />
-            {m['settings.decks.generate']()}
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{m['settings.decks.gen_title']()}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <Input
-                placeholder={m['settings.decks.title_ph']()}
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-              <Tabs defaultValue="text">
-                <TabsList className="w-full">
-                  <TabsTrigger value="text" className="flex-1">
-                    {m['settings.decks.tab_text']()}
-                  </TabsTrigger>
-                  <TabsTrigger value="url" className="flex-1">
-                    {m['settings.decks.tab_url']()}
-                  </TabsTrigger>
-                  <TabsTrigger value="file" className="flex-1">
-                    {m['settings.decks.tab_file']()}
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="text" className="pt-3">
-                  <Textarea
-                    rows={6}
-                    placeholder={m['settings.decks.input_ph']()}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                  />
-                </TabsContent>
-                <TabsContent value="url" className="pt-3">
-                  <Input
-                    placeholder={m['settings.decks.url_ph']()}
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                  />
-                </TabsContent>
-                <TabsContent value="file" className="space-y-2 pt-3">
-                  <input
-                    type="file"
-                    accept=".txt,.md,text/plain,text/markdown"
-                    onChange={handleFile}
-                    className="text-sm"
-                  />
-                  <p className="text-muted-foreground text-xs">
-                    {reading
-                      ? m['settings.decks.reading_file']()
-                      : input
-                        ? `✓ ${input.length} chars`
-                        : m['settings.decks.file_hint']()}
-                  </p>
-                </TabsContent>
-              </Tabs>
-            </div>
-            <DialogFooter>
-              <Button
-                disabled={
-                  (!input.trim() && !url.trim()) || reading || gen.isPending
-                }
-                onClick={() => gen.mutate()}
-              >
-                {gen.isPending
-                  ? m['settings.decks.generating']()
-                  : m['settings.decks.generate']()}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+          <input
+            ref={importRef}
+            type="file"
+            accept=".json,application/json"
+            className="hidden"
+            onChange={handleImportFile}
+          />
+          <Button
+            variant="outline"
+            className="gap-2"
+            disabled={importDeck.isPending}
+            onClick={() => importRef.current?.click()}
+          >
+            <Upload className="size-4" />
+            {importDeck.isPending
+              ? m['settings.decks.importing']()
+              : m['settings.decks.import']()}
+          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger className={cn(buttonVariants(), 'gap-2')}>
+              <Plus className="size-4" />
+              {m['settings.decks.generate']()}
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{m['settings.decks.gen_title']()}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <Input
+                  placeholder={m['settings.decks.title_ph']()}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+                <Tabs defaultValue="text">
+                  <TabsList className="w-full">
+                    <TabsTrigger value="text" className="flex-1">
+                      {m['settings.decks.tab_text']()}
+                    </TabsTrigger>
+                    <TabsTrigger value="url" className="flex-1">
+                      {m['settings.decks.tab_url']()}
+                    </TabsTrigger>
+                    <TabsTrigger value="file" className="flex-1">
+                      {m['settings.decks.tab_file']()}
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="text" className="pt-3">
+                    <Textarea
+                      rows={6}
+                      placeholder={m['settings.decks.input_ph']()}
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                    />
+                  </TabsContent>
+                  <TabsContent value="url" className="pt-3">
+                    <Input
+                      placeholder={m['settings.decks.url_ph']()}
+                      value={url}
+                      onChange={(e) => setUrl(e.target.value)}
+                    />
+                  </TabsContent>
+                  <TabsContent value="file" className="space-y-2 pt-3">
+                    <input
+                      type="file"
+                      accept=".txt,.md,text/plain,text/markdown"
+                      onChange={handleFile}
+                      className="text-sm"
+                    />
+                    <p className="text-muted-foreground text-xs">
+                      {reading
+                        ? m['settings.decks.reading_file']()
+                        : input
+                          ? `✓ ${input.length} chars`
+                          : m['settings.decks.file_hint']()}
+                    </p>
+                  </TabsContent>
+                </Tabs>
+              </div>
+              <DialogFooter>
+                <Button
+                  disabled={
+                    (!input.trim() && !url.trim()) || reading || gen.isPending
+                  }
+                  onClick={() => gen.mutate()}
+                >
+                  {gen.isPending
+                    ? m['settings.decks.generating']()
+                    : m['settings.decks.generate']()}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {list.data && list.data.length === 0 && (

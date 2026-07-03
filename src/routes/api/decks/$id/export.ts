@@ -24,12 +24,29 @@ async function GET({
   const deck = await getDeckWithSlides(params.id, auth.userId);
   if (!deck) return respErr('Deck not found');
 
-  // 取关联品牌（用于上色/字体）
-  let brand: { palette?: any; typography?: any } | undefined;
+  // 取关联品牌（pptx 用于上色/字体；json 保留完整品牌）
+  let fullBrand = null;
   if (deck.brandId) {
     const { getBrand } = await import('@/modules/deck/brand.service');
-    const b = await getBrand(deck.brandId, auth.userId);
-    if (b) brand = { palette: b.palette, typography: b.typography };
+    fullBrand = await getBrand(deck.brandId, auth.userId);
+  }
+  const brand: { palette?: any; typography?: any } | undefined = fullBrand
+    ? { palette: fullBrand.palette, typography: fullBrand.typography }
+    : undefined;
+
+  // deckgene 原生可移植格式（无损，供另一实例导入）
+  if (format === 'json') {
+    const { buildPortableDeck } =
+      await import('@/modules/deck/portable.service');
+    const portable = buildPortableDeck(deck, fullBrand, envConfigs.app_url);
+    const safe = deck.slug || 'deck';
+    return new Response(JSON.stringify(portable, null, 2), {
+      status: 200,
+      headers: {
+        'content-type': 'application/json; charset=utf-8',
+        'content-disposition': `attachment; filename="${safe}.deckgene.json"`,
+      },
+    });
   }
 
   if (format === 'pptx') {
