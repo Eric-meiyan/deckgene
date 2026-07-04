@@ -849,6 +849,7 @@
   "settings.deck_editor.unsaved_leave": "Leave anyway",
   "settings.deck_editor.unsaved_save_all": "Save all & leave",
   "settings.deck_editor.unsaved_saving": "Saving…",
+  "settings.deck_editor.saving_overlay": "Saving… please don't edit",
   "settings.deck_editor.deleted": "Deleted",
   "settings.deck_editor.del_slide": "Delete slide",
   "settings.deck_editor.reorder_hint": "Drag the handle to reorder.",

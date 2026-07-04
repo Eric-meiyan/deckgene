@@ -18,6 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import {
   GripVertical,
+  Loader2,
   MonitorPlay,
   PanelRightClose,
   PanelRightOpen,
@@ -392,10 +393,11 @@ function InspectPanel({
       </div>
 
       <Button
-        className="w-full"
+        className="w-full gap-1"
         disabled={save.isPending || !panelDirty}
         onClick={() => save.mutate(undefined)}
       >
+        {save.isPending && <Loader2 className="size-4 animate-spin" />}
         {panelDirty
           ? m['settings.deck_editor.save']()
           : m['settings.deck_editor.saved']()}
@@ -956,6 +958,18 @@ function DeckEditorPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 保存全部进行中：盖蒙层拦住一切操作，避免并发编辑被 setDrafts({}) 清掉 */}
+      {saveAll.isPending && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-background flex items-center gap-3 rounded-lg px-5 py-4 shadow-lg">
+            <Loader2 className="text-primary size-5 animate-spin" />
+            <span className="text-sm font-medium">
+              {m['settings.deck_editor.saving_overlay']()}
+            </span>
+          </div>
+        </div>
+      )}
 
       {presenting && (
         <DeckPlayer
