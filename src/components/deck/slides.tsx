@@ -51,28 +51,11 @@ function Surface({
   className?: string;
 }) {
   const { indent, fontScale } = useContext(SlideLayout);
-  const tuned = indent != null || fontScale != null;
-  // 仅在设了微调时才包一层，保证未调页型的布局零变化。
-  const content = tuned ? (
-    <div
-      style={
-        {
-          zoom: fontScale != null ? fontScale / 100 : undefined,
-          paddingLeft: indent != null ? `${indent}px` : undefined,
-        } as React.CSSProperties
-      }
-    >
-      {children}
-    </div>
-  ) : (
-    children
-  );
   return (
     <div
       className={cn(
-        'border-border/40 relative flex aspect-[16/9] w-full flex-col justify-center overflow-hidden rounded-[28px] border p-10 shadow-sm sm:p-14',
-        surfaceClass(variant),
-        className
+        'border-border/40 relative aspect-[16/9] w-full overflow-hidden rounded-[28px] border shadow-sm',
+        surfaceClass(variant)
       )}
     >
       {/* 品牌 Logo（每页右上，--brand-logo 未设置则不显示） */}
@@ -80,7 +63,25 @@ function Surface({
         className="absolute top-6 right-6 h-7 w-28 bg-contain bg-right bg-no-repeat"
         style={{ backgroundImage: 'var(--brand-logo, none)' }}
       />
-      {content}
+      {/*
+       * 内容层：撑满盒子，承载页型布局(className)与可选微调(zoom/indent)。
+       * 页型的 flex 子项直接落在这一层，因此 flex-row(左图右字)、p-0(全出血图)
+       * 等布局不会被额外包裹层破坏——微调只改这层的 style，不再改变 DOM 结构。
+       */}
+      <div
+        className={cn(
+          'flex size-full flex-col justify-center p-10 sm:p-14',
+          className
+        )}
+        style={
+          {
+            zoom: fontScale != null ? fontScale / 100 : undefined,
+            paddingLeft: indent != null ? `${indent}px` : undefined,
+          } as React.CSSProperties
+        }
+      >
+        {children}
+      </div>
     </div>
   );
 }
