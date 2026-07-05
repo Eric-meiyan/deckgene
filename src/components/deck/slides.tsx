@@ -492,11 +492,24 @@ function ImageSlide({ c }: { c: Content }) {
   );
 }
 
+// 图片一侧占整页宽度的比例（另一侧文字占余下）。缺省=各半。
+const IMAGE_TEXT_RATIO: Record<string, string> = {
+  half: '50%',
+  third: '33.333%',
+  twoFifths: '40%',
+  threeFifths: '60%',
+  twoThirds: '66.667%',
+};
+
 function ImageTextSlide({ c }: { c: Content }) {
   const imgRight = c.imageSide === 'right';
   const bullets: string[] = Array.isArray(c.bullets) ? c.bullets : [];
+  const imgWidth = IMAGE_TEXT_RATIO[c.imageRatio as string] ?? '50%';
   const img = (
-    <div className="bg-muted relative w-1/2 shrink-0 self-stretch overflow-hidden">
+    <div
+      className="bg-muted relative shrink-0 self-stretch overflow-hidden"
+      style={{ width: imgWidth }}
+    >
       {c.imageUrl && (
         <img
           src={c.imageUrl}

@@ -310,6 +310,11 @@ const imageText: SlideTemplate = {
     variant: surface,
     imageUrl: z.string().url(),
     imageSide: z.enum(['left', 'right']).optional(),
+    // 图片一侧占整页的宽度比例（另一侧文字自动占余下）。缺省=各半。
+    imageRatio: z
+      .enum(['half', 'third', 'twoFifths', 'threeFifths', 'twoThirds'])
+      .optional()
+      .catch(undefined),
     fit: z.enum(['cover', 'contain']).optional(),
     heading: short(80).optional(),
     body: long(400).optional(),

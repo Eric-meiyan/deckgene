@@ -148,9 +148,20 @@ function toLines(slideType: string, c: any): { title: string; body: string[] } {
       };
     default: {
       const body: string[] = [];
+      // 跳过版式/控制类字段，避免把 'right'、'cover'、'twoThirds' 等枚举值当正文导出
+      const SKIP = [
+        'variant',
+        'layoutVariant',
+        'image',
+        'imageUrl',
+        'imageSide',
+        'imageRatio',
+        'fit',
+        'align',
+        'size',
+      ];
       for (const [k, v] of Object.entries(c)) {
-        if (['variant', 'layoutVariant', 'image', 'imageUrl'].includes(k))
-          continue;
+        if (SKIP.includes(k)) continue;
         if (typeof v === 'string' && v.trim()) body.push(v.trim());
       }
       return { title: s(c.heading) || s(c.title), body };

@@ -90,6 +90,7 @@ const LABELS_ZH: Record<string, string> = {
   imageUrl: '图片链接',
   fit: '图片填充',
   imageSide: '图片位置',
+  imageRatio: '图片占比',
   bullets: '要点',
   images: '图片',
   events: '事件',
@@ -113,6 +114,11 @@ const ENUM_ZH: Record<string, string> = {
   lg: '大',
   cover: '填充(裁切)',
   contain: '完整(留白)',
+  half: '图 1/2',
+  third: '图 1/3',
+  twoFifths: '图 2/5',
+  threeFifths: '图 3/5',
+  twoThirds: '图 2/3',
 };
 const ENUM_EN: Record<string, string> = {
   sm: 'Small',
@@ -120,6 +126,11 @@ const ENUM_EN: Record<string, string> = {
   lg: 'Large',
   cover: 'Fill (crop)',
   contain: 'Fit (whole)',
+  half: 'Image 1/2',
+  third: 'Image 1/3',
+  twoFifths: 'Image 2/5',
+  threeFifths: 'Image 3/5',
+  twoThirds: 'Image 2/3',
 };
 
 // 英文：把 key 拆词首字母大写（buttonHref → Button Href）
