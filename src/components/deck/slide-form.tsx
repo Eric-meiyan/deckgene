@@ -33,6 +33,7 @@ interface Field {
   label: string;
   optional: boolean;
   long?: boolean;
+  code?: boolean; // 等宽代码编辑（如 html 页型的源码）
   values?: string[];
   fields?: Field[]; // for object / array-object
 }
@@ -94,6 +95,7 @@ const LABELS_ZH: Record<string, string> = {
   events: '事件',
   align: '对齐',
   size: '字号',
+  html: 'HTML 代码',
 };
 const ENUM_ZH: Record<string, string> = {
   light: '浅色',
@@ -129,6 +131,7 @@ const LABELS_EN: Record<string, string> = {
   layoutVariant: 'Layout',
   indent: 'Left indent (px)',
   fontScale: 'Scale (%)',
+  html: 'HTML code',
 };
 function labelFor(k: string) {
   return isZh() ? (LABELS_ZH[k] ?? humanize(k)) : (LABELS_EN[k] ?? humanize(k));
@@ -167,7 +170,14 @@ function describe(v: Z, name: string): Field | null {
   const t = node?._def?.type;
   const label = labelFor(name);
   if (t === 'string')
-    return { kind: 'string', name, label, optional, long: strMax(node) >= 160 };
+    return {
+      kind: 'string',
+      name,
+      label,
+      optional,
+      long: strMax(node) >= 160,
+      code: name === 'html',
+    };
   if (t === 'number') return { kind: 'number', name, label, optional };
   if (t === 'enum') {
     const values = Object.values(
@@ -255,6 +265,9 @@ function sampleVal(f: Field, idx = 0): unknown {
 
 // 复杂结构（二维数组等）自动造不出，手动给示例
 const SAMPLE_OVERRIDES: Record<string, Content> = {
+  html: {
+    html: '<div style="height:100vh;margin:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#25A18E,#0f172a);color:#fff;font-family:system-ui,sans-serif"><div style="text-align:center"><h1 style="font-size:72px;margin:0 0 12px">Custom HTML</h1><p style="opacity:.85;font-size:28px;margin:0">粘贴任意 HTML，整页渲染</p></div></div>',
+  },
   dataTable: {
     heading: 'Data table',
     columns: ['Metric', 'Q1', 'Q2'],
@@ -331,6 +344,17 @@ function Scalar({
         onChange={(e) =>
           onChange(e.target.value === '' ? undefined : Number(e.target.value))
         }
+      />
+    );
+  }
+  if (field.code) {
+    return (
+      <Textarea
+        rows={10}
+        spellCheck={false}
+        className="min-h-0 py-1.5 font-mono text-xs"
+        value={(value as string) ?? ''}
+        onChange={(e) => onChange(e.target.value || undefined)}
       />
     );
   }
@@ -483,6 +507,17 @@ function FieldRow({
           '：结构较复杂，请用下方「高级:原始 JSON」编辑。',
           ': complex structure — edit via "Advanced: raw JSON" below.'
         )}
+      </div>
+    );
+  }
+  // 代码字段（html）：标签在上，编辑框占满整行
+  if (field.code) {
+    return (
+      <div className="space-y-1">
+        <div className="text-muted-foreground text-xs font-medium">
+          {field.label}
+        </div>
+        <Scalar field={field} value={value} onChange={onChange} />
       </div>
     );
   }

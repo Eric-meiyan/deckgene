@@ -551,6 +551,30 @@ function ImageTextSlide({ c }: { c: Content }) {
   );
 }
 
+function HtmlSlide({ c }: { c: Content }) {
+  const html = typeof c.html === 'string' ? c.html : '';
+  return (
+    <Surface variant={c.variant} className="p-0">
+      {html.trim() ? (
+        <iframe
+          // 沙箱：默认不放行脚本/表单/弹窗，仅渲染静态 HTML+CSS，
+          // 天然隔离样式，并挡掉内嵌 <script> 的 XSS 风险。
+          // pointer-events-none：让点击/键盘仍由外层幻灯片处理（翻页/选中）。
+          sandbox=""
+          srcDoc={html}
+          title="custom-html"
+          referrerPolicy="no-referrer"
+          className="pointer-events-none absolute inset-0 size-full border-0 bg-white"
+        />
+      ) : (
+        <div className="text-muted-foreground/60 flex size-full items-center justify-center font-mono text-sm">
+          &lt;html /&gt;
+        </div>
+      )}
+    </Surface>
+  );
+}
+
 function ImageGridSlide({ c }: { c: Content }) {
   const images: Content[] = Array.isArray(c.images) ? c.images : [];
   const cols = Math.min(Math.max(images.length, 1), 4);
@@ -2534,6 +2558,7 @@ const RENDERERS: Record<string, (c: Content) => React.ReactNode> = {
   imageGrid: (c) => <ImageGridSlide c={c} />,
   timeline: (c) => <TimelineSlide c={c} />,
   dataTable: (c) => <DataTableSlide c={c} />,
+  html: (c) => <HtmlSlide c={c} />,
 };
 
 export function renderSlide(

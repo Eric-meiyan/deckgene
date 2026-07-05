@@ -30,6 +30,10 @@ export const SLIDE_ZH: Record<string, { name: string; when: string }> = {
     name: '图文左右',
     when: '一侧大图、另一侧标题配正文或要点。图片可切左右。用于图文并排讲解。',
   },
+  html: {
+    name: '自定义 HTML',
+    when: '粘贴一段 HTML/CSS，整页按源码渲染（沙箱隔离，不跑脚本）。用于内置页型覆盖不了的自定义版式或嵌入内容。',
+  },
   imageGrid: {
     name: '多图并排',
     when: '两到四张图并排（左中右），每张可配一行说明。用于一组视觉并列展示。',

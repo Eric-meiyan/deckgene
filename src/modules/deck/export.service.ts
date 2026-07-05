@@ -52,6 +52,14 @@ function toLines(slideType: string, c: any): { title: string; body: string[] } {
       };
     case 'chapter':
       return { title: s(c.title), body: [s(c.number)].filter(Boolean) };
+    case 'html': {
+      // PPTX 无法渲染 HTML：降级为纯文本（剥标签、压空白），保留可读内容。
+      const text = s(c.html)
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      return { title: 'HTML', body: text ? [text.slice(0, 600)] : [] };
+    }
     case 'agenda':
       return {
         title: s(c.heading),

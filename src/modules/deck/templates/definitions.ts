@@ -1065,6 +1065,19 @@ const codeBlock: SlideTemplate = {
     code: long(900),
   }),
 };
+// 自定义 HTML 页：整页由一段 HTML 源码渲染（沙箱 iframe 隔离，见 slides.tsx HtmlSlide）。
+// 用于内置页型覆盖不了的自定义版式/嵌入内容。安全：iframe sandbox 默认不放行脚本。
+const html: SlideTemplate = {
+  key: 'html',
+  name: 'Custom HTML',
+  category: 'Show',
+  whenToUse:
+    'A full slide rendered from raw HTML/CSS you paste in. Use for custom layouts or embeds the built-in slide types cannot express.',
+  schema: z.object({
+    variant: surface,
+    html: z.string().max(20000),
+  }),
+};
 const terminal: SlideTemplate = {
   key: 'terminal',
   name: 'Terminal',
@@ -1608,6 +1621,7 @@ const RAW_SLIDE_TEMPLATES: SlideTemplate[] = [
   imageGrid,
   timeline,
   dataTable,
+  html,
   // Close
   cta,
   contactCard,
