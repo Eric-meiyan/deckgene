@@ -59,9 +59,9 @@ function Surface({
       )}
     >
       {/* 品牌 Logo（每页右上，--brand-logo 未设置则不显示）
-          尺寸框在原 h-7/w-28 基础上放大到 120%（logo 偏小） */}
+          尺寸框在原 h-7/w-28 基础上放大到 200%（logo 偏小） */}
       <div
-        className="absolute top-6 right-6 h-[2.1rem] w-[8.4rem] bg-contain bg-right bg-no-repeat"
+        className="absolute top-6 right-6 h-14 w-56 bg-contain bg-right bg-no-repeat"
         style={{ backgroundImage: 'var(--brand-logo, none)' }}
       />
       {/*
