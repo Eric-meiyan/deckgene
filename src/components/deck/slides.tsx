@@ -1977,19 +1977,55 @@ function NpsScoreSlide({ c }: { c: Content }) {
 
 // ════════ 批次 4 渲染器（Show 剩余 19）════════
 
+/**
+ * 把常见视频/分享链接转成可 <iframe> 内嵌的播放器地址；
+ * 识别不了的链接原样返回（假定已是可嵌入地址）。null 表示无链接。
+ */
+function toEmbedUrl(raw?: string): string | null {
+  if (!raw) return null;
+  const url = raw.trim();
+  if (!url) return null;
+  // bilibili: bilibili.com/video/BVxxxx → player.bilibili.com
+  const bili = url.match(/bilibili\.com\/video\/(BV[0-9A-Za-z]+)/i);
+  if (bili) {
+    return `https://player.bilibili.com/player.html?bvid=${bili[1]}&autoplay=0&danmaku=0&high_quality=1`;
+  }
+  // youtube: watch?v=ID / youtu.be/ID / embed/ID
+  const yt = url.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/i
+  );
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+  // vimeo: vimeo.com/123 或 vimeo.com/video/123
+  const vim = url.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
+  if (vim) return `https://player.vimeo.com/video/${vim[1]}`;
+  return url;
+}
+
 function EmbedSlide({ c }: { c: Content }) {
+  const embedUrl = toEmbedUrl(c.url);
   return (
     <Surface variant={c.variant}>
       <H>{c.heading}</H>
-      <div className="bg-muted flex aspect-video items-center justify-center rounded-xl">
-        <span className="bg-primary text-primary-foreground flex size-16 items-center justify-center rounded-full text-2xl">
-          ▶
-        </span>
+      <div className="bg-muted aspect-video overflow-hidden rounded-xl">
+        {embedUrl ? (
+          <iframe
+            src={embedUrl}
+            title={c.heading || 'embed'}
+            className="size-full"
+            loading="lazy"
+            allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+            allowFullScreen
+          />
+        ) : (
+          <div className="flex size-full items-center justify-center">
+            <span className="bg-primary text-primary-foreground flex size-16 items-center justify-center rounded-full text-2xl">
+              ▶
+            </span>
+          </div>
+        )}
       </div>
-      {(c.caption || c.url) && (
-        <p className={cn('mt-2 text-sm', mutedClass(c.variant))}>
-          {c.caption ?? c.url}
-        </p>
+      {c.caption && (
+        <p className={cn('mt-2 text-sm', mutedClass(c.variant))}>{c.caption}</p>
       )}
     </Surface>
   );
