@@ -190,7 +190,20 @@ export function getAuth(configs?: Record<string, string>) {
     secret: envConfigs.auth_secret,
     trustedOrigins: (request) => {
       const origins: string[] = [];
-      if (envConfigs.app_url) origins.push(envConfigs.app_url);
+      if (envConfigs.app_url) {
+        origins.push(envConfigs.app_url);
+        // 同时放行 www 变体：deckgene.com ⇄ www.deckgene.com 视为可信同源，
+        // 避免从带/不带 www 的域名登录时报 Invalid Origin。
+        try {
+          const u = new URL(envConfigs.app_url);
+          const altHost = u.hostname.startsWith('www.')
+            ? u.hostname.slice(4)
+            : `www.${u.hostname}`;
+          origins.push(
+            `${u.protocol}//${altHost}${u.port ? `:${u.port}` : ''}`
+          );
+        } catch {}
+      }
       try {
         const origin = request?.headers?.get?.('origin');
         if (origin && new URL(origin).hostname === 'localhost')

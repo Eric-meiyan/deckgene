@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 
+import { proxifyImage } from '@/lib/image-proxy';
 import { cn } from '@/lib/utils';
 
 /**
@@ -473,7 +474,7 @@ function ImageSlide({ c }: { c: Content }) {
       {c.imageUrl && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={c.imageUrl}
+          src={proxifyImage(c.imageUrl)}
           alt={c.heading ?? ''}
           className={cn(
             'absolute inset-0 size-full',
@@ -513,7 +514,7 @@ function ImageTextSlide({ c }: { c: Content }) {
     >
       {c.imageUrl && (
         <img
-          src={c.imageUrl}
+          src={proxifyImage(c.imageUrl)}
           alt={c.heading ?? ''}
           className={cn(
             'absolute inset-0 size-full',
@@ -604,7 +605,7 @@ function ImageGridSlide({ c }: { c: Content }) {
             <div className="bg-muted relative min-h-0 flex-1 overflow-hidden rounded-xl">
               {im.imageUrl && (
                 <img
-                  src={im.imageUrl}
+                  src={proxifyImage(im.imageUrl)}
                   alt=""
                   className={cn(
                     'absolute inset-0 size-full',
@@ -1710,7 +1711,7 @@ function ProductShowcaseSlide({ c }: { c: Content }) {
             <div className="bg-muted aspect-video overflow-hidden rounded-xl">
               {it.imageUrl && (
                 <img
-                  src={it.imageUrl}
+                  src={proxifyImage(it.imageUrl)}
                   alt=""
                   className="size-full object-cover"
                 />
