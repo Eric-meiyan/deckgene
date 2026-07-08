@@ -83,7 +83,8 @@ export function DeckPlayer({
     Math.min(Math.max(startIndex, 0), Math.max(slides.length - 1, 0))
   );
   const [overview, setOverview] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
+  // 右上角显示当前时间（时钟），而非已用时长
+  const [now, setNow] = useState(() => new Date());
   const total = slides.length;
 
   const toggleFullscreen = useCallback(() => {
@@ -97,7 +98,7 @@ export function DeckPlayer({
   const prev = useCallback(() => setI((v) => Math.max(0, v - 1)), []);
 
   useEffect(() => {
-    const t = setInterval(() => setElapsed((e) => e + 1), 1000);
+    const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
   useEffect(() => {
@@ -141,7 +142,7 @@ export function DeckPlayer({
         </div>
         <div className="flex items-center gap-3">
           <span className="text-neutral-500 tabular-nums">
-            {pad(Math.floor(elapsed / 60))}:{pad(elapsed % 60)}
+            {pad(now.getHours())}:{pad(now.getMinutes())}
           </span>
           <button
             onClick={() => setOverview((o) => !o)}
