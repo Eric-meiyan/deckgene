@@ -40,4 +40,11 @@ const expired = await signAccessToken('deck_A', -10);
 assert.equal(await verifyAccessToken('deck_A', expired), false);
 ok('过期 token 拒绝');
 
+// AUTH_SECRET 缺失时 token 签名应抛错
+const savedSecret = process.env.AUTH_SECRET;
+delete process.env.AUTH_SECRET;
+await assert.rejects(() => signAccessToken('deck_A'), /AUTH_SECRET/);
+process.env.AUTH_SECRET = savedSecret;
+ok('AUTH_SECRET 缺失时抛错');
+
 console.log(`\n全部通过 (${n})`);
