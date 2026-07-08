@@ -4,6 +4,7 @@ import { Play } from 'lucide-react';
 
 import { getPublicDeckFn } from '@/modules/deck/server';
 import { m } from '@/paraglide/messages.js';
+import { DeckPasswordGate } from '@/components/deck/deck-password-gate';
 import { DeckPlayer } from '@/components/deck/deck-player';
 import { brandStyle, DeckRenderer } from '@/components/deck/deck-renderer';
 
@@ -11,10 +12,17 @@ import { brandStyle, DeckRenderer } from '@/components/deck/deck-renderer';
  * GET /d/{slug} — 公开 live deck 渲染页（见 docs/PRD.md §9.8）。
  * 仅渲染已发布且可见的 deck；否则 404。默认 noindex（白标/隐私）。
  * 滚动查看 + 「演示」全屏播放（数据已在页内，无需登录）。
+ * 密码保护的 deck 走 <DeckPasswordGate />（见 docs/PRD.md §9.9）。
  */
 function DeckPage() {
   const { deck } = Route.useLoaderData();
+  const { slug } = Route.useParams();
   const [presenting, setPresenting] = useState(false);
+
+  if ('locked' in deck) {
+    return <DeckPasswordGate slug={slug} title={deck.title} />;
+  }
+
   return (
     <>
       <DeckRenderer slides={deck.slides} brand={deck.brand} />
