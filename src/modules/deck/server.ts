@@ -29,15 +29,21 @@ export interface PublicDeck {
   slides: PublicSlide[];
 }
 
+export interface LockedDeck {
+  locked: true;
+  id: string;
+  title: string;
+}
+
 export const getPublicDeckFn = createServerFn()
   .inputValidator((data: { slug: string }) => data)
-  .handler(async ({ data }): Promise<PublicDeck | null> => {
-    const { getPublishedDeckBySlug } = await import('./deck.service');
+  .handler(async ({ data }): Promise<PublicDeck | LockedDeck | null> => {
+    const { getPublishedDeckBySlug, shapePublicDeck } =
+      await import('./deck.service');
     const deck = await getPublishedDeckBySlug(data.slug);
     if (!deck) return null;
 
-    // visibility 处理：password 暂不开放渲染；expiring 过期视为不可见。
-    if (deck.visibility === 'password') return null;
+    // 过期的 expiring 仍视为不可见（保留原逻辑）
     if (
       deck.visibility === 'expiring' &&
       deck.expiresAt &&
@@ -46,37 +52,18 @@ export const getPublicDeckFn = createServerFn()
       return null;
     }
 
-    // 取关联 brand 的 palette/typography（公开渲染，无 userId）
-    let brand: PublicBrand | null = null;
-    if (deck.brandId) {
-      const { db } = await import('@/core/db');
-      const { brand: brandTable } = await import('@/config/db/schema');
-      const { eq } = await import('drizzle-orm');
-      const [b] = await db()
-        .select()
-        .from(brandTable)
-        .where(eq(brandTable.id, deck.brandId))
-        .limit(1);
-      if (b)
-        brand = {
-          palette: b.palette,
-          typography: b.typography,
-          logo_url: b.logoUrl,
-        };
+    // 密码保护：loader 不下发内容，只回 locked 元信息；内容走 /api/d/:slug/content
+    if (deck.visibility === 'password') {
+      return { locked: true, id: deck.id, title: deck.title };
     }
 
+    const shaped = await shapePublicDeck(deck);
     return {
       id: deck.id,
-      title: deck.title,
+      title: shaped.title,
       slug: deck.slug,
       locale: deck.locale,
-      brand,
-      slides: deck.slides.map((s) => ({
-        id: s.id,
-        slide_type: s.slideType,
-        order: s.order,
-        content: (s.content ?? {}) as JsonObject,
-        notes: s.notes ?? null,
-      })),
+      brand: shaped.brand,
+      slides: shaped.slides,
     };
   });
