@@ -4,6 +4,8 @@ type MinIntervalOptions = {
   intervalMs: number;
   keyPrefix?: string;
   extraKey?: string;
+  /** When true, exclude the (attacker-controlled) Cookie header from the throttle key. */
+  ignoreCookie?: boolean;
 };
 
 type Store = Map<string, number>;
@@ -32,10 +34,13 @@ function getStore(): Store {
 function buildKey(request: Request, opts: MinIntervalOptions): string {
   const url = new URL(request.url);
   const ip = getClientIpFromRequest(request);
-  const cookie = request.headers.get('cookie') || '';
-  const cookieHash = cookie ? md5(cookie) : 'no-cookie';
   const prefix = opts.keyPrefix || 'min-interval';
   const extra = opts.extraKey ? `|${opts.extraKey}` : '';
+  if (opts.ignoreCookie) {
+    return `${prefix}|${request.method}|${url.pathname}|${ip}${extra}`;
+  }
+  const cookie = request.headers.get('cookie') || '';
+  const cookieHash = cookie ? md5(cookie) : 'no-cookie';
   return `${prefix}|${request.method}|${url.pathname}|${ip}|${cookieHash}${extra}`;
 }
 

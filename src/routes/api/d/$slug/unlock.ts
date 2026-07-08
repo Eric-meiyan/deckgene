@@ -19,6 +19,7 @@ async function POST({
     intervalMs: 1000,
     keyPrefix: 'deck-unlock',
     extraKey: params.slug,
+    ignoreCookie: true,
   });
   if (limited) return limited;
 
@@ -40,9 +41,10 @@ async function POST({
 
   const token = await signAccessToken(deck.id, WEEK_SECONDS);
   const res = respData({ ok: true });
+  const secure = process.env.NODE_ENV === 'production' ? ' Secure;' : '';
   res.headers.append(
     'set-cookie',
-    `deck_access_${deck.id}=${token}; Path=/; Max-Age=${WEEK_SECONDS}; HttpOnly; Secure; SameSite=Lax`
+    `deck_access_${deck.id}=${token}; Path=/; Max-Age=${WEEK_SECONDS}; HttpOnly;${secure} SameSite=Lax`
   );
   return res;
 }

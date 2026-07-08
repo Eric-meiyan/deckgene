@@ -4,7 +4,7 @@
  * 仅用 Web Crypto（crypto.subtle），Node 20+ 与 Cloudflare Workers 均可用。
  */
 const enc = new TextEncoder();
-const PBKDF2_ITERATIONS = 100_000;
+const PBKDF2_ITERATIONS = 600_000;
 const DEFAULT_TTL = 7 * 24 * 60 * 60; // 秒
 
 function secret(): string {
