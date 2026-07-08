@@ -379,3 +379,75 @@ export function toApiDeck(
       : {}),
   };
 }
+
+/** 设置/移除 deck 分享密码。password 非空→password 模式；null→回 unlisted。 */
+export async function setDeckShare(
+  id: string,
+  userId: string,
+  opts: { password: string | null }
+): Promise<Deck | null> {
+  const { hashDeckPassword } = await import('@/lib/deck-password');
+  const hasPw = typeof opts.password === 'string' && opts.password.length > 0;
+  const [row] = await db()
+    .update(deck)
+    .set(
+      hasPw
+        ? {
+            visibility: 'password',
+            passwordHash: await hashDeckPassword(opts.password as string),
+          }
+        : { visibility: 'unlisted', passwordHash: null }
+    )
+    .where(and(eq(deck.id, id), eq(deck.userId, userId)))
+    .returning();
+  return row ?? null;
+}
+
+/** 把 DeckWithSlides 塑成公开渲染负载（title + slides + brand）。 */
+export async function shapePublicDeck(d: DeckWithSlides): Promise<{
+  title: string;
+  slides: {
+    id: string;
+    slide_type: string;
+    order: number;
+    content: Record<string, unknown>;
+    notes: string | null;
+  }[];
+  brand: {
+    palette: Record<string, string> | null;
+    typography: Record<string, string> | null;
+    logo_url: string | null;
+  } | null;
+}> {
+  let brand = null as null | {
+    palette: Record<string, string> | null;
+    typography: Record<string, string> | null;
+    logo_url: string | null;
+  };
+  if (d.brandId) {
+    const { brand: brandTable } = await import('@/config/db/schema');
+    const [b] = await db()
+      .select()
+      .from(brandTable)
+      .where(eq(brandTable.id, d.brandId))
+      .limit(1);
+    if (b) {
+      brand = {
+        palette: b.palette as Record<string, string> | null,
+        typography: b.typography as Record<string, string> | null,
+        logo_url: b.logoUrl,
+      };
+    }
+  }
+  return {
+    title: d.title,
+    slides: d.slides.map((s) => ({
+      id: s.id,
+      slide_type: s.slideType,
+      order: s.order,
+      content: (s.content ?? {}) as Record<string, unknown>,
+      notes: s.notes,
+    })),
+    brand,
+  };
+}
