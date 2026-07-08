@@ -89,6 +89,7 @@ interface DeckDTO {
   status: string;
   url: string | null;
   brand_id: string | null;
+  visibility: string;
   slides: SlideDTO[];
 }
 interface BrandLite {
@@ -482,6 +483,8 @@ function DeckEditorPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [addQ, setAddQ] = useState('');
   const [addAt, setAddAt] = useState<number | undefined>(undefined);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [pw, setPw] = useState('');
   const [selectedId, setSelectedId] = useState('');
   const [collapsed, setCollapsed] = useState(false);
   // 就地全屏演示（"从当前页演示"）；退出后编辑器仍在原地、当前页不变。
@@ -537,6 +540,17 @@ function DeckEditorPage() {
     mutationFn: (to: 'publish' | 'unpublish') =>
       apiPost(`/api/decks/${id}/${to}`, {}),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['deck', id] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const share = useMutation({
+    mutationFn: (password: string | null) =>
+      apiPatch(`/api/decks/${id}/share`, { password }),
+    onSuccess: () => {
+      toast.success(m['settings.share.saved']());
+      qc.invalidateQueries({ queryKey: ['deck', id] });
+      setShareOpen(false);
+      setPw('');
+    },
     onError: (e: Error) => toast.error(e.message),
   });
   const delSlide = useMutation({
@@ -765,6 +779,13 @@ function DeckEditorPage() {
               {m['settings.deck_editor.publish']()}
             </Button>
           )}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShareOpen(true)}
+          >
+            {m['settings.deck_editor.share']()}
+          </Button>
         </div>
       </div>
 
@@ -913,6 +934,49 @@ function DeckEditorPage() {
             pending={addSlide.isPending}
             onPick={(key) => addSlide.mutate(key)}
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle>{m['settings.share.title']()}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-muted-foreground text-sm">
+              {deck.visibility === 'password'
+                ? m['settings.share.status_password']()
+                : m['settings.share.status_unlisted']()}
+            </p>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                {m['settings.share.password_label']()}
+              </label>
+              <Input
+                type="password"
+                value={pw}
+                onChange={(e) => setPw(e.target.value)}
+                placeholder={m['settings.share.password_placeholder']()}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            {deck.visibility === 'password' && (
+              <Button
+                variant="outline"
+                onClick={() => share.mutate(null)}
+                disabled={share.isPending}
+              >
+                {m['settings.share.remove']()}
+              </Button>
+            )}
+            <Button
+              onClick={() => share.mutate(pw)}
+              disabled={share.isPending || !pw}
+            >
+              {m['settings.share.set']()}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
