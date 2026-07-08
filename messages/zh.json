@@ -985,7 +985,7 @@
   "settings.share.status_unlisted": "链接可见（任何拿到链接的人都能看）",
   "settings.share.status_password": "密码保护（需输入密码）",
   "settings.share.password_label": "访问密码",
-  "settings.share.password_placeholder": "留空并保存＝移除密码",
+  "settings.share.password_placeholder": "输入访问密码",
   "settings.share.set": "保存密码",
   "settings.share.remove": "移除密码",
   "settings.share.saved": "已更新分享设置",

@@ -937,7 +937,13 @@ function DeckEditorPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+      <Dialog
+        open={shareOpen}
+        onOpenChange={(o) => {
+          setShareOpen(o);
+          if (!o) setPw('');
+        }}
+      >
         <DialogContent className="sm:max-w-[440px]">
           <DialogHeader>
             <DialogTitle>{m['settings.share.title']()}</DialogTitle>

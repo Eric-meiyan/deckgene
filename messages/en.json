@@ -985,7 +985,7 @@
   "settings.share.status_unlisted": "Unlisted (anyone with the link can view)",
   "settings.share.status_password": "Password protected",
   "settings.share.password_label": "Access password",
-  "settings.share.password_placeholder": "Leave empty and save to remove",
+  "settings.share.password_placeholder": "Enter an access password",
   "settings.share.set": "Save password",
   "settings.share.remove": "Remove password",
   "settings.share.saved": "Share settings updated",
