@@ -4,7 +4,9 @@
  * 仅用 Web Crypto（crypto.subtle），Node 20+ 与 Cloudflare Workers 均可用。
  */
 const enc = new TextEncoder();
-const PBKDF2_ITERATIONS = 600_000;
+// Cloudflare Workers (workerd) 对 PBKDF2 迭代数的硬上限是 100,000，超过 deriveBits 会抛异常。
+// 不要调高——暴力破解防护由 /unlock 的 IP+slug 限流兜底（见 docs 设计规格）。
+const PBKDF2_ITERATIONS = 100_000;
 const DEFAULT_TTL = 7 * 24 * 60 * 60; // 秒
 
 function secret(): string {
