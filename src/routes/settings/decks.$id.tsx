@@ -963,6 +963,8 @@ function DeckEditorPage() {
                 value={pw}
                 onChange={(e) => setPw(e.target.value)}
                 placeholder={m['settings.share.password_placeholder']()}
+                autoComplete="new-password"
+                name="deck-share-password"
               />
             </div>
           </div>
