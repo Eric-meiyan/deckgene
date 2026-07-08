@@ -979,5 +979,9 @@
   "settings.deck_editor.inspect": "Inspect",
   "settings.deck_editor.collapse_panel": "Collapse panel",
   "settings.deck_editor.expand_panel": "Edit panel",
-  "settings.deck_editor.pick_slide": "Select a slide on the left to edit"
+  "settings.deck_editor.pick_slide": "Select a slide on the left to edit",
+  "deck_gate.description": "This content is password protected. Enter the password to view.",
+  "deck_gate.password_label": "Password",
+  "deck_gate.submit": "View",
+  "deck_gate.wrong_password": "Wrong password, try again"
 }

@@ -979,5 +979,9 @@
   "settings.deck_editor.inspect": "编辑",
   "settings.deck_editor.collapse_panel": "收起编辑面板",
   "settings.deck_editor.expand_panel": "展开编辑面板",
-  "settings.deck_editor.pick_slide": "点选左侧任意一页开始编辑"
+  "settings.deck_editor.pick_slide": "点选左侧任意一页开始编辑",
+  "deck_gate.description": "此内容受密码保护，请输入密码查看。",
+  "deck_gate.password_label": "密码",
+  "deck_gate.submit": "查看",
+  "deck_gate.wrong_password": "密码错误，请重试"
 }
