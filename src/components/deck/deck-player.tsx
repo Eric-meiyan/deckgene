@@ -104,12 +104,18 @@ export function DeckPlayer({
     rootRef.current?.requestFullscreen?.().catch(() => {});
   }, []);
   useEffect(() => {
+    // 翻页笔基本是模拟键盘：下一页多为 PageDown / →，上一页多为 PageUp / ←。
+    // 覆盖与 PPT 一致的常见集合，兼容各品牌遥控器。
+    const NEXT_KEYS = ['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Enter'];
+    const PREV_KEYS = ['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'];
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'ArrowRight' || e.key === ' ') {
+      if (NEXT_KEYS.includes(e.key)) {
         e.preventDefault();
         next();
-      } else if (e.key === 'ArrowLeft') prev();
-      else if (e.key === 'g' || e.key === 'G') setOverview((o) => !o);
+      } else if (PREV_KEYS.includes(e.key)) {
+        e.preventDefault();
+        prev();
+      } else if (e.key === 'g' || e.key === 'G') setOverview((o) => !o);
       else if (e.key === 'f' || e.key === 'F') toggleFullscreen();
       else if (e.key === 'Escape') {
         if (overview) setOverview(false);
