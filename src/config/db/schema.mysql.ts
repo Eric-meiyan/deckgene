@@ -10,7 +10,6 @@ import {
   boolean,
   index,
   int,
-  json,
   longtext,
   mysqlTable,
   text,
@@ -560,85 +559,3 @@ export type NewTicketMessage = typeof ticketMessage.$inferInsert;
 
 // ─── Custom tables ───────────────────────────────────────────────────────────
 // Add your own tables below this line.
-
-// ─── deckgene: brands / decks (backfill) ──────────────────────────────────
-// schema.postgres.ts 已有完整的 brand/deck/slide/job 表（见 §5 数据模型），
-// 但此前未回填到 mysql 模板。deck_view 的 FK 需要 deck 存在，这里只补齐
-// deck_view 所依赖的 brand + deck 两张表；slide/job 仍待后续任务回填。
-
-export const brand = table(
-  'brand',
-  {
-    id: varchar191('id').primaryKey(),
-    userId: varchar191('user_id')
-      .notNull()
-      .references(() => user.id, { onDelete: 'cascade' }),
-    name: varchar('name', { length: 255 }).notNull(),
-    sourceUrl: text('source_url'),
-    palette: json('palette').$type<Record<string, string>>(),
-    typography: json('typography').$type<Record<string, string>>(),
-    tone: text('tone'),
-    logoUrl: text('logo_url'),
-    isActive: boolean('is_active').notNull().default(false),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().onUpdateNow().notNull(),
-  },
-  (t) => [index('idx_brand_user').on(t.userId)]
-);
-
-export const deck = table(
-  'deck',
-  {
-    id: varchar191('id').primaryKey(),
-    userId: varchar191('user_id')
-      .notNull()
-      .references(() => user.id, { onDelete: 'cascade' }),
-    brandId: varchar191('brand_id').references(() => brand.id, {
-      onDelete: 'set null',
-    }),
-    title: varchar('title', { length: 255 }).notNull(),
-    slug: varchar191('slug').notNull().unique(),
-    status: varchar('status', { length: 50 }).notNull().default('draft'),
-    visibility: varchar('visibility', { length: 50 })
-      .notNull()
-      .default('unlisted'),
-    passwordHash: text('password_hash'),
-    expiresAt: timestamp('expires_at'),
-    noIndex: boolean('no_index').notNull().default(true),
-    locale: varchar('locale', { length: 20 }).notNull().default('en'),
-    sourceInput: text('source_input'),
-    publishedAt: timestamp('published_at'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().onUpdateNow().notNull(),
-  },
-  (t) => [
-    index('idx_deck_user').on(t.userId),
-    index('idx_deck_slug').on(t.slug),
-  ]
-);
-
-export type Brand = typeof brand.$inferSelect;
-export type NewBrand = typeof brand.$inferInsert;
-export type Deck = typeof deck.$inferSelect;
-export type NewDeck = typeof deck.$inferInsert;
-
-// ─── deck_view (浏览事件) ───────────────────────────────────────────────────
-
-export const deckView = table(
-  'deck_view',
-  {
-    id: varchar191('id').primaryKey(),
-    deckId: varchar191('deck_id')
-      .notNull()
-      .references(() => deck.id, { onDelete: 'cascade' }),
-    visitorId: varchar191('visitor_id').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-  },
-  (t) => [
-    index('idx_deck_view_deck_created').on(t.deckId, t.createdAt),
-    index('idx_deck_view_deck_visitor').on(t.deckId, t.visitorId),
-  ]
-);
-
-export type DeckView = typeof deckView.$inferSelect;
-export type NewDeckView = typeof deckView.$inferInsert;
