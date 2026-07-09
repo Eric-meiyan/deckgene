@@ -1,8 +1,14 @@
-import { and, asc, desc, eq, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 
 import { db } from '@/core/db';
-import { deck, slide, type Deck, type Slide } from '@/config/db/schema';
+import {
+  deck,
+  deckView,
+  slide,
+  type Deck,
+  type Slide,
+} from '@/config/db/schema';
 
 import { makeSlug } from './job.service';
 // ─── Slide 编辑（控制台编辑器 / §9.5）───────────────────────────────────────
@@ -449,5 +455,58 @@ export async function shapePublicDeck(d: DeckWithSlides): Promise<{
       notes: s.notes,
     })),
     brand,
+  };
+}
+
+// ─── 浏览统计（deck analytics）──────────────────────────────────────────────
+
+const VIEW_THROTTLE_MS = 30 * 60 * 1000; // 30 分钟
+
+/** 记录一次浏览：同一访客对同一 deck 30 分钟内只记 1 次。 */
+export async function recordDeckView(
+  deckId: string,
+  visitorId: string
+): Promise<void> {
+  const cutoff = new Date(Date.now() - VIEW_THROTTLE_MS);
+  const [recent] = await db()
+    .select({ id: deckView.id })
+    .from(deckView)
+    .where(
+      and(
+        eq(deckView.deckId, deckId),
+        eq(deckView.visitorId, visitorId),
+        gte(deckView.createdAt, cutoff)
+      )
+    )
+    .limit(1);
+  if (recent) return; // 命中节流，不重复记录
+  const { getUuid } = await import('@/lib/hash');
+  await db()
+    .insert(deckView)
+    .values({ id: getUuid(), deckId, visitorId, createdAt: new Date() });
+}
+
+/** 所有者读某 deck 的统计：总浏览 + 独立访客。非本人/不存在返回 null。 */
+export async function getDeckStats(
+  deckId: string,
+  userId: string
+): Promise<{ views: number; uniques: number } | null> {
+  const [owned] = await db()
+    .select({ id: deck.id })
+    .from(deck)
+    .where(and(eq(deck.id, deckId), eq(deck.userId, userId)))
+    .limit(1);
+  if (!owned) return null;
+
+  const [row] = await db()
+    .select({
+      views: sql<number>`count(*)`,
+      uniques: sql<number>`count(distinct ${deckView.visitorId})`,
+    })
+    .from(deckView)
+    .where(eq(deckView.deckId, deckId));
+  return {
+    views: Number(row?.views ?? 0),
+    uniques: Number(row?.uniques ?? 0),
   };
 }
