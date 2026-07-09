@@ -502,6 +502,11 @@ function DeckEditorPage() {
     queryKey: ['brands'],
     queryFn: () => apiGet<BrandLite[]>('/api/brands'),
   });
+  const statsQ = useQuery({
+    queryKey: ['deck-stats', id],
+    queryFn: () =>
+      apiGet<{ views: number; uniques: number }>(`/api/decks/${id}/stats`),
+  });
   const setBrand = useMutation({
     mutationFn: (brandId: string | null) =>
       apiPatch(`/api/decks/${id}`, { brand_id: brandId }),
@@ -787,6 +792,33 @@ function DeckEditorPage() {
             {m['settings.deck_editor.share']()}
           </Button>
         </div>
+      </div>
+
+      <div className="shrink-0 space-y-2">
+        <div className="text-sm font-medium">
+          {m['settings.deck_stats.title']()}
+        </div>
+        <div className="flex gap-4">
+          <div className="rounded-lg border p-3">
+            <div className="text-2xl font-bold">
+              {statsQ.data?.views ?? '—'}
+            </div>
+            <div className="text-muted-foreground text-xs">
+              {m['settings.deck_stats.views']()}
+            </div>
+          </div>
+          <div className="rounded-lg border p-3">
+            <div className="text-2xl font-bold">
+              {statsQ.data?.uniques ?? '—'}
+            </div>
+            <div className="text-muted-foreground text-xs">
+              {m['settings.deck_stats.uniques']()}
+            </div>
+          </div>
+        </div>
+        <p className="text-muted-foreground text-xs">
+          {m['settings.deck_stats.note']()}
+        </p>
       </div>
 
       <div className="flex min-h-0 flex-1 gap-4">
