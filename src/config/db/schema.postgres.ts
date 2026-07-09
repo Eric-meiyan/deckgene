@@ -743,6 +743,22 @@ export const job = table(
   (t) => [index('idx_job_user_status').on(t.userId, t.status)]
 );
 
+export const deckView = table(
+  'deck_view',
+  {
+    id: text('id').primaryKey(),
+    deckId: text('deck_id')
+      .notNull()
+      .references(() => deck.id, { onDelete: 'cascade' }),
+    visitorId: text('visitor_id').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('idx_deck_view_deck_created').on(t.deckId, t.createdAt),
+    index('idx_deck_view_deck_visitor').on(t.deckId, t.visitorId),
+  ]
+);
+
 export type Brand = typeof brand.$inferSelect;
 export type NewBrand = typeof brand.$inferInsert;
 export type Deck = typeof deck.$inferSelect;
@@ -751,3 +767,5 @@ export type Slide = typeof slide.$inferSelect;
 export type NewSlide = typeof slide.$inferInsert;
 export type Job = typeof job.$inferSelect;
 export type NewJob = typeof job.$inferInsert;
+export type DeckView = typeof deckView.$inferSelect;
+export type NewDeckView = typeof deckView.$inferInsert;
