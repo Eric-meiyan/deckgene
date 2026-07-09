@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Play } from 'lucide-react';
@@ -69,6 +69,12 @@ export function DeckPasswordGate({
       await unlock.mutateAsync(value.password);
     },
   });
+
+  useEffect(() => {
+    if (contentQuery.data && !contentQuery.data.locked) {
+      apiPost(`/api/d/${slug}/view`).catch(() => {});
+    }
+  }, [contentQuery.data, slug]);
 
   // 有效 cookie → 直接出内容（回访免密）
   if (contentQuery.data && !contentQuery.data.locked) {

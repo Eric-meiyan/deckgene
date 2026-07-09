@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createFileRoute, notFound } from '@tanstack/react-router';
 import { Play } from 'lucide-react';
 
 import { getPublicDeckFn } from '@/modules/deck/server';
+import { apiPost } from '@/lib/api-client';
 import { m } from '@/paraglide/messages.js';
 import { DeckPasswordGate } from '@/components/deck/deck-password-gate';
 import { DeckPlayer } from '@/components/deck/deck-player';
@@ -18,6 +19,11 @@ function DeckPage() {
   const { deck } = Route.useLoaderData();
   const { slug } = Route.useParams();
   const [presenting, setPresenting] = useState(false);
+
+  useEffect(() => {
+    if ('locked' in deck && deck.locked) return; // 密码 deck 由门禁组件负责
+    apiPost(`/api/d/${slug}/view`).catch(() => {});
+  }, [slug]);
 
   if ('locked' in deck) {
     return <DeckPasswordGate slug={slug} title={deck.title} />;
