@@ -30,5 +30,9 @@ assert.equal(
   false
 );
 ok('iPhone Safari 不是 bot');
+assert.equal(isBot('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 YaBrowser/24.1.0 Safari/537.36'), false);
+ok('Yandex Browser 不是 bot');
+assert.equal(isBot('Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0 SE 2.X MetaSr 1.0'), false);
+ok('Sogou Explorer 不是 bot');
 
 console.log(`\n全部通过 (${n})`);

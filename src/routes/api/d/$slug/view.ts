@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
 import {
-  getPublishedDeckBySlug,
+  getPublishedDeckIdBySlug,
   recordDeckView,
 } from '@/modules/deck/deck.service';
 import { isBot } from '@/lib/bot-filter';
@@ -22,7 +22,7 @@ async function POST({
   // bot 过滤
   if (isBot(request.headers.get('user-agent'))) return respData({ ok: true });
 
-  const deck = await getPublishedDeckBySlug(params.slug);
+  const deck = await getPublishedDeckIdBySlug(params.slug);
   if (!deck) return respData({ ok: true });
 
   // 匿名访客 cookie

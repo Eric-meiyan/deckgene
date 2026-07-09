@@ -126,6 +126,18 @@ export async function getPublishedDeckBySlug(
   return { ...deckRow, slides };
 }
 
+/** 只取已发布 deck 的 id(浏览统计信标用,避免拉全部 slides)。 */
+export async function getPublishedDeckIdBySlug(
+  slug: string
+): Promise<{ id: string } | null> {
+  const [row] = await db()
+    .select({ id: deck.id })
+    .from(deck)
+    .where(and(eq(deck.slug, slug), eq(deck.status, 'published')))
+    .limit(1);
+  return row ?? null;
+}
+
 /** 从 deck 级模板创建一个 deck（套用激活品牌；不扣积分）。 */
 export async function createDeckFromTemplate(
   userId: string,
