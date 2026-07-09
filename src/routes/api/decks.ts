@@ -11,7 +11,11 @@ async function GET({ request }: { request: Request }) {
   if (auth instanceof Response) return auth;
   const decks = await listDecksWithCover(auth.userId);
   return respData(
-    decks.map((d) => ({ ...toApiDeck(d, envConfigs.app_url), cover: d.cover }))
+    decks.map((d) => ({
+      ...toApiDeck(d, envConfigs.app_url),
+      cover: d.cover,
+      views: d.views,
+    }))
   );
 }
 

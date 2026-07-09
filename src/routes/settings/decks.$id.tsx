@@ -506,6 +506,7 @@ function DeckEditorPage() {
     queryKey: ['deck-stats', id],
     queryFn: () =>
       apiGet<{ views: number; uniques: number }>(`/api/decks/${id}/stats`),
+    enabled: shareOpen,
   });
   const setBrand = useMutation({
     mutationFn: (brandId: string | null) =>
@@ -794,33 +795,6 @@ function DeckEditorPage() {
         </div>
       </div>
 
-      <div className="shrink-0 space-y-2">
-        <div className="text-sm font-medium">
-          {m['settings.deck_stats.title']()}
-        </div>
-        <div className="flex gap-4">
-          <div className="rounded-lg border p-3">
-            <div className="text-2xl font-bold">
-              {statsQ.data?.views ?? '—'}
-            </div>
-            <div className="text-muted-foreground text-xs">
-              {m['settings.deck_stats.views']()}
-            </div>
-          </div>
-          <div className="rounded-lg border p-3">
-            <div className="text-2xl font-bold">
-              {statsQ.data?.uniques ?? '—'}
-            </div>
-            <div className="text-muted-foreground text-xs">
-              {m['settings.deck_stats.uniques']()}
-            </div>
-          </div>
-        </div>
-        <p className="text-muted-foreground text-xs">
-          {m['settings.deck_stats.note']()}
-        </p>
-      </div>
-
       <div className="flex min-h-0 flex-1 gap-4">
         {/* 中间：独立滚动的幻灯片预览列表 */}
         <div className="min-w-0 flex-1 space-y-3 overflow-y-auto pr-1">
@@ -986,6 +960,25 @@ function DeckEditorPage() {
                 ? m['settings.share.status_password']()
                 : m['settings.share.status_unlisted']()}
             </p>
+            <div className="bg-muted/50 rounded-lg p-3">
+              <div className="flex gap-6 text-sm">
+                <span>
+                  <span className="font-semibold">
+                    {statsQ.data?.views ?? '—'}
+                  </span>{' '}
+                  {m['settings.deck_stats.views']()}
+                </span>
+                <span>
+                  <span className="font-semibold">
+                    {statsQ.data?.uniques ?? '—'}
+                  </span>{' '}
+                  {m['settings.deck_stats.uniques']()}
+                </span>
+              </div>
+              <p className="text-muted-foreground mt-1.5 text-xs">
+                {m['settings.deck_stats.note']()}
+              </p>
+            </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">
                 {m['settings.share.password_label']()}

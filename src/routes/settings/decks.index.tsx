@@ -32,6 +32,7 @@ interface DeckRow {
   url: string | null;
   updated_at: string;
   cover: { slideType: string; content: Record<string, unknown> } | null;
+  views: number;
 }
 
 const DESIGN_W = 1280;
@@ -307,8 +308,13 @@ function DecksPage() {
                       : m['settings.decks.draft']()}
                   </Badge>
                 </div>
-                <div className="text-muted-foreground truncate text-xs">
-                  {d.slug}
+                <div className="text-muted-foreground flex items-center gap-2 text-xs">
+                  <span className="truncate">{d.slug}</span>
+                  {d.status === 'published' && (
+                    <span className="shrink-0">
+                      · {d.views} {m['settings.deck_stats.views']()}
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2">

@@ -170,13 +170,25 @@ export async function listDecks(userId: string): Promise<Deck[]> {
 
 export type DeckCover = { slideType: string; content: unknown };
 
-/** 列表 + 每个 deck 的首页（min order）用于渲染缩略图。 */
+/** 列表 + 每个 deck 的首页（min order）用于渲染缩略图 + 总浏览数。 */
 export async function listDecksWithCover(
   userId: string
-): Promise<Array<Deck & { cover: DeckCover | null }>> {
+): Promise<Array<Deck & { cover: DeckCover | null; views: number }>> {
   const decks = await listDecks(userId);
-  if (!decks.length) return decks.map((d) => ({ ...d, cover: null }));
+  if (!decks.length) return [];
   const ids = decks.map((d) => d.id);
+  // 每个 deck 的总浏览数（一条分组查询）。
+  const viewRows = await db()
+    .select({ deckId: deckView.deckId, views: sql<number>`count(*)` })
+    .from(deckView)
+    .where(inArray(deckView.deckId, ids))
+    .groupBy(deckView.deckId);
+  const viewsByDeck = new Map<string, number>(
+    viewRows.map(
+      (r: { deckId: string; views: number }) =>
+        [r.deckId, Number(r.views)] as [string, number]
+    )
+  );
   // 精简列，按 (deckId, order) 升序；JS 里取每个 deck 的首个即首页（兼容删除后 order 有空档）。
   const rows = await db()
     .select({
@@ -192,7 +204,11 @@ export async function listDecksWithCover(
     if (!firstByDeck.has(r.deckId))
       firstByDeck.set(r.deckId, { slideType: r.slideType, content: r.content });
   }
-  return decks.map((d) => ({ ...d, cover: firstByDeck.get(d.id) ?? null }));
+  return decks.map((d) => ({
+    ...d,
+    cover: firstByDeck.get(d.id) ?? null,
+    views: viewsByDeck.get(d.id) ?? 0,
+  }));
 }
 
 /** 发布：status=published + 记录 publishedAt，live URL 生效。 */
